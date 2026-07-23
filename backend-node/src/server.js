@@ -1,0 +1,2 @@
+const app=require('./app');const {port}=require('./config/env');const {testConnection}=require('./config/db');const {ensureAdminTables}=require('./services/bootstrapService');
+(async()=>{try{await testConnection();await ensureAdminTables();app.listen(port,()=>console.log(`Node.js API running on http://localhost:${port}`));}catch(error){console.error('Backend startup failed:',error.message);process.exit(1);}})();

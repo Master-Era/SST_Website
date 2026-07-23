@@ -1,0 +1,40 @@
+import React from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { initStore, currentUser } from "./utils/store";
+import AdminLayout from "./layout/AdminLayout";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import HomeEdit from "./pages/HomeEdit";
+import ActivityEdit from "./pages/ActivityEdit";
+import EventsEdit from "./pages/EventsEdit";
+import NewsEdit from "./pages/NewsEdit";
+import GalleryEdit from "./pages/GalleryEdit";
+import AboutEdit from "./pages/AboutEdit";
+import Inquiries from "./pages/Inquiries";
+import Donations from "./pages/Donations";
+import Devotees from "./pages/Devotees";
+import Settings from "./pages/Settings";
+import AdminUsers from "./pages/AdminUsers";
+import Logs from "./pages/Logs";
+import "./AdminPanel.css";
+
+function Guard(){ return currentUser()? <AdminLayout/> : <Navigate to="/admin/login" replace/> }
+export default function AdminPanel(){ initStore(); return <Routes>
+  <Route path="login" element={<Login/>}/>
+  <Route element={<Guard/>}>
+    <Route index element={<Navigate to="dashboard" replace/>}/>
+    <Route path="dashboard" element={<Dashboard/>}/>
+    <Route path="website/home" element={<HomeEdit/>}/>
+    <Route path="website/activity" element={<ActivityEdit/>}/>
+    <Route path="website/events" element={<EventsEdit/>}/>
+    <Route path="website/news" element={<NewsEdit/>}/>
+    <Route path="website/gallery" element={<GalleryEdit/>}/>
+    <Route path="website/about" element={<AboutEdit/>}/>
+    <Route path="inquiries" element={<Inquiries/>}/>
+    <Route path="donations" element={<Donations/>}/>
+    <Route path="devotees" element={<Devotees/>}/>
+    <Route path="settings" element={<Settings/>}/>
+    <Route path="users" element={<AdminUsers/>}/>
+    <Route path="logs" element={<Logs/>}/>
+  </Route>
+</Routes>}

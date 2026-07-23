@@ -1,0 +1,126 @@
+.admin-sidebar {
+  width: 292px;
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 30;
+  overflow: auto;
+  padding: 18px 18px 22px;
+  color: #fff;
+  background: linear-gradient(180deg, #034edafb 0%, #034edafb 44%, #034edafb 100%);
+  box-shadow: 22px 0 70px #b4641a38;
+  transition: width .26s cubic-bezier(.2, .8, .2, 1);
+}
+
+.admin-shell.is-collapsed .admin-sidebar {
+  width: 86px;
+}
+
+.sidebar-toggle {
+  width: 46px;
+  height: 42px;
+  margin: 0 0 14px auto;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 15px;
+  color: #fff;
+  background: linear-gradient(135deg, #d47100f1, #fa8703);
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.sidebar-toggle:hover,
+.admin-sidebar a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px #0002;
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, .18);
+}
+
+.brand-logo-img {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  padding: 6px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 10px 25px #0003;
+}
+
+.brand-text b {
+  display: block;
+  font-size: 20px;
+  letter-spacing: -.02em;
+}
+
+.brand-text span {
+  font-size: 12px;
+  color: #fff3d5;
+}
+
+.admin-shell.is-collapsed .brand {
+  justify-content: center;
+}
+
+.admin-shell.is-collapsed .brand-text,
+.admin-shell.is-collapsed .admin-sidebar nav em {
+  display: none;
+}
+
+.admin-sidebar nav {
+  display: grid;
+  gap: 9px;
+}
+
+.admin-sidebar a {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 13px;
+  border-radius: 17px;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: .22s ease;
+}
+
+.admin-sidebar a span {
+  min-width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: #fff;
+  background: linear-gradient(135deg, #d47100f1, #fa8703);
+}
+
+.admin-sidebar a:hover,
+.admin-sidebar a.active {
+  background: linear-gradient(90deg, #e47106, #e47106);
+  transform: translateX(4px);
+  box-shadow: 0 16px 32px #0004;
+}
+
+@media (max-width: 900px) {
+  .admin-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+
+  .admin-shell.is-collapsed .admin-sidebar {
+    width: 100%;
+  }
+
+  .admin-shell.is-collapsed .brand-text,
+  .admin-shell.is-collapsed .admin-sidebar nav em {
+    display: block;
+  }
+}
