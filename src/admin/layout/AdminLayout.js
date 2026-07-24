@@ -39,6 +39,7 @@ export default function AdminLayout() {
   const [profileForm, setProfileForm] = useState({ username: "", password: "" });
   const [profileMessage, setProfileMessage] = useState("");
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem("adminSidebar") !== "open");
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [dark, setDark] = useState(() => localStorage.getItem("adminTheme") === "dark");
   const topActionsRef = useRef(null);
   const notifications = load("notifications", []);
@@ -118,11 +119,13 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className={`admin-shell ${collapsed ? "is-collapsed" : ""} ${dark ? "dark-mode" : "day-mode"}`}>
-      <AdminSidebar user={user} setCollapsed={setCollapsed} />
+    <div className={`admin-shell ${collapsed ? "is-collapsed" : ""} ${mobileOpen ? "mobile-menu-open" : ""} ${dark ? "dark-mode" : "day-mode"}`}>
+      <AdminSidebar user={user} setCollapsed={setCollapsed} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+      <button className="admin-mobile-backdrop" type="button" aria-label="Close menu" onClick={() => setMobileOpen(false)} />
       <main className="admin-main">
         <header className="admin-topbar">
-          <div>
+          <button className="mobile-menu-button" type="button" aria-label="Open admin menu" onClick={() => setMobileOpen(true)}><Icon name="menu" /></button>
+          <div className="admin-topbar-title">
             <h1>Power By Master Era</h1>
             <p>Live website content, records, media and users</p>
           </div>

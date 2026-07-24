@@ -6,7 +6,25 @@ const { parseJson } = require('../utils/helpers');
 const AppError = require('../utils/appError');
 const CONTENT_MODULES = new Set(['home','activity','events','news','gallery','about']);
 
-exports.login=async(req,res)=>{await ensureAdminTables();const {username,password}=req.body;if(!username||!password)throw new AppError(400,'Username and password are required');const user=await one('SELECT * FROM admin_users WHERE username=? LIMIT 1',[username]);if(!user)throw new AppError(401,'Invalid username or password');if(user.status!=='active')throw new AppError(403,'User is blocked. Contact Super Admin to activate this login.');const now=new Date();if(user.locked_until&&new Date(user.locked_until)>now){const mins=Math.max(1,Math.ceil((new Date(user.locked_until)-now)/60000));throw new AppError(423,`Too many wrong attempts. Try again after ${mins} minute(s).`);}if(!verifyPassword(password,user.password_hash||'')){let failed=Number(user.failed_attempts||0)+1;let locks=Number(user.lock_count||0);if(failed>=3){locks+=1;if(locks>=3){await execute("UPDATE admin_users SET failed_attempts=0,lock_count=?,locked_until=NULL,status='inactive' WHERE id=?",[locks,user.id]);throw new AppError(403,'User blocked after repeated failed login. Contact Super Admin.');}const until=new Date(Date.now()+10*60000);await execute('UPDATE admin_users SET failed_attempts=0,lock_count=?,locked_until=? WHERE id=?',[locks,until,user.id]);throw new AppError(423,'Too many wrong attempts. Login locked for 10 minutes.');}await execute('UPDATE admin_users SET failed_attempts=? WHERE id=?',[failed,user.id]);throw new AppError(401,`Invalid username or password. ${3-failed} attempt(s) remaining.`);}await execute('UPDATE admin_users SET failed_attempts=0,locked_until=NULL WHERE id=?',[user.id]);res.json({access_token:signToken(user.username,user.role),token_type:'bearer',user:{id:user.id,name:user.name,username:user.username,role:user.role,status:user.status}});};
+exports.login=async(req,res)=>{
+  await ensureAdminTables();
+  const {username,password}=req.body;
+  if(!username||!password) throw new AppError(400,'Username and password are required');
+  const user=await one('SELECT * FROM admin_users WHERE username=? LIMIT 1',[username]);
+  if(!user) throw new AppError(401,'Invalid username or password');
+  if(user.status!=='active') throw new AppError(403,'User is blocked. Contact Super Admin to activate this login.');
+  if(!verifyPassword(password,user.password_hash||'')){
+    const failed=Number(user.failed_attempts||0)+1;
+    if(failed>=3){
+      await execute("UPDATE admin_users SET failed_attempts=?,status='inactive',locked_until=NULL WHERE id=?",[failed,user.id]);
+      throw new AppError(403,'3 wrong password attempts completed. This user is now blocked. Super Admin must activate it.');
+    }
+    await execute('UPDATE admin_users SET failed_attempts=? WHERE id=?',[failed,user.id]);
+    throw new AppError(401,`Invalid username or password. ${3-failed} attempt(s) remaining.`);
+  }
+  await execute('UPDATE admin_users SET failed_attempts=0,lock_count=0,locked_until=NULL WHERE id=?',[user.id]);
+  res.json({access_token:signToken(user.username,user.role),token_type:'bearer',user:{id:user.id,name:user.name,username:user.username,role:user.role,status:user.status}});
+};
 exports.dashboard=async(req,res)=>{const [[i],[d],[g],[e],[v],latest]=await Promise.all([query('SELECT COUNT(*) total FROM inquiries'),query('SELECT COUNT(*) total FROM donations'),query('SELECT COUNT(*) total FROM gallery'),query("SELECT COUNT(*) total FROM events WHERE status='upcoming'"),query('SELECT COUNT(*) total FROM hari_bhakto'),query('SELECT id,inquiry_type type,full_name name,message,status,created_at FROM inquiries ORDER BY id DESC LIMIT 6')]);res.json({total_inquiries:i.total,total_donations:d.total,total_gallery_images:g.total,upcoming_events:e.total,total_devotees:v.total,latest_messages:latest,role:req.admin.role});};
 exports.upload=(req,res)=>{if(!req.file)throw new AppError(400,'File is required');res.status(201).json({url:`/uploads/media/${req.file.filename}`});};
 exports.getSettings=async(_req,res)=>{await ensureAdminTables();res.json(await one('SELECT * FROM settings WHERE id=1')||{});};

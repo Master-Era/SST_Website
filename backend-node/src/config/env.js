@@ -9,7 +9,16 @@ module.exports = {
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   adminSecret: process.env.ADMIN_SECRET || 'shreeji-samipya-admin-secret',
   passwordSalt: process.env.ADMIN_PASSWORD_SALT || 'shreeji-samipya',
-  uploadMaxMb: Number(process.env.UPLOAD_MAX_MB || 15),
+  uploadMaxMb: Number(process.env.UPLOAD_MAX_MB || 100),
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || '',
+    notifyTo: process.env.NOTIFICATION_EMAIL || '',
+  },
   db: {
     host: process.env.DB_HOST || 'localhost',
     port: Number(process.env.DB_PORT || 3306),

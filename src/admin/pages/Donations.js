@@ -33,6 +33,7 @@ export default function Donations() {
           onSearch={() => setApplied(filters)}
           onClear={() => { setFilters({ q: "", from: "", to: "" }); setApplied({ q: "", from: "", to: "" }); }}
           rows={filteredRows}
+          allRows={rows}
           title="Donation Management Report"
           filename="donation-report.csv"
           totalLabel={`Total Amount: Rs. ${totalAmount}`}

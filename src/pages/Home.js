@@ -70,16 +70,23 @@ function Home() {
     getContentMap().then(setContentMap).catch(() => setContentMap({}));
   }, []);
 
-  const heroImages = useMemo(() => {
+  const heroSlides = useMemo(() => {
     const adminHero = contentMap["Admin Website Data"]?.home?.hero || [];
-    const adminImages = adminHero.map((item) => mediaUrl(item.image)).filter(Boolean);
-    if (adminImages.length) return adminImages;
+    const adminSlides = adminHero
+      .filter((item) => item.active !== false)
+      .map((item) => ({
+        ...item,
+        image: mediaUrl(item.image || item.poster),
+        videoUrl: mediaUrl(item.videoUrl || item.video),
+      }))
+      .filter((item) => item.image || item.videoUrl);
+    if (adminSlides.length) return adminSlides;
+
     const imageText = contentMap["Home - Hero Images"]?.imageUrls || contentMap["Home - Hero Images"]?.imageUrl || "";
-    const images = String(imageText)
+    return String(imageText)
       .split(/\n|,/)
-      .map((item) => mediaUrl(item.trim()))
-      .filter(Boolean);
-    return images;
+      .map((item, index) => ({ id: `legacy-${index}`, image: mediaUrl(item.trim()), active: true }))
+      .filter((item) => item.image);
   }, [contentMap]);
 
   const dynamicTrustCards = useMemo(() => {
@@ -132,7 +139,7 @@ function Home() {
 
   return (
     <main className="home-page">
-      <Hero images={heroImages} />
+      <Hero slides={heroSlides} />
 
       <section className="home-trust-section">
         <div className="page-shell">

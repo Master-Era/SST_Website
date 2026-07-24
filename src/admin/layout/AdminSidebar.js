@@ -39,9 +39,9 @@ function SidebarIcon({ name }) {
   return <svg {...common}>{paths[name]}</svg>;
 }
 
-export default function AdminSidebar({ user, setCollapsed }) {
+export default function AdminSidebar({ user, setCollapsed, setMobileOpen }) {
   return (
-    <aside className="admin-sidebar" onMouseEnter={() => setCollapsed(false)} onMouseLeave={() => setCollapsed(true)}>
+    <aside className="admin-sidebar" onMouseEnter={() => { if (window.innerWidth > 900) setCollapsed(false); }} onMouseLeave={() => { if (window.innerWidth > 900) setCollapsed(true); }}>
       <button className="sidebar-toggle" title="Toggle menu" onClick={() => setCollapsed((current) => !current)}>
         <SidebarIcon name="menu" />
       </button>
@@ -51,7 +51,7 @@ export default function AdminSidebar({ user, setCollapsed }) {
       </div>
       <nav>
         {menu.filter((item) => item[3].includes(user?.role)).map(([to, label, icon]) => (
-          <NavLink key={to} to={to} onClick={() => setCollapsed(true)} className={({ isActive }) => (isActive ? "active" : "")}>
+          <NavLink key={to} to={to} onClick={() => { setCollapsed(true); setMobileOpen?.(false); }} className={({ isActive }) => (isActive ? "active" : "")}>
             <span><SidebarIcon name={icon} /></span><em>{label}</em>
           </NavLink>
         ))}

@@ -41,6 +41,7 @@ export default function Inquiries() {
           onSearch={() => setApplied(filters)}
           onClear={() => { setFilters({ q: "", from: "", to: "" }); setApplied({ q: "", from: "", to: "" }); }}
           rows={filteredRows}
+          allRows={rows}
           title="Inquiry Management Report"
           filename="inquiry-report.csv"
         />

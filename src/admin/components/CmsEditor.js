@@ -11,6 +11,7 @@ export default function CmsEditor({
   imageLabel = "Image",
   allowPdf = false,
   allowVideo = false,
+  allowVideoUpload = false,
   hideImage = false,
   inlineEditor = false,
 }) {
@@ -22,6 +23,8 @@ export default function CmsEditor({
     title: "",
     content: "",
     image: "",
+    videoUrl: "",
+    mediaType: "image",
     active: true,
     createdAt: new Date().toISOString().slice(0, 10),
   };
@@ -54,12 +57,19 @@ export default function CmsEditor({
       return;
     }
 
+    const targetKey = allowVideoUpload && file.type.startsWith("video/") ? "videoUrl" : key;
     try {
       const uploaded = await adminApi.upload(file);
-      change(key, uploaded.url || uploaded.image_url || uploaded.path);
+      change(targetKey, uploaded.url || uploaded.image_url || uploaded.path);
+      if (allowVideoUpload) {
+        change("mediaType", targetKey === "videoUrl" ? "video" : "image");
+        if (targetKey === "videoUrl") change("image", edit.image || "");
+        else change("videoUrl", "");
+      }
     } catch {
       const data = await fileToDataUrl(file);
-      change(key, data);
+      change(targetKey, data);
+      if (allowVideoUpload) change("mediaType", targetKey === "videoUrl" ? "video" : "image");
     }
   };
 
@@ -102,14 +112,15 @@ export default function CmsEditor({
           {!hideImage && (
             <label className="cms-field">
               {imageLabel}
-              <input type="file" className="input" accept="image/*" onChange={fileChange} />
-              {edit.image && <img className="thumb cms-preview-thumb" src={mediaUrl(edit.image)} alt="preview" />}
+              <input type="file" className="input" accept={allowVideoUpload ? "image/*,video/mp4,video/webm,video/ogg" : "image/*"} onChange={fileChange} />
+              {allowVideoUpload && <small>Upload JPG/PNG poster or MP4/WebM video clip.</small>}
+              {edit.videoUrl ? <video className="thumb cms-preview-thumb" src={mediaUrl(edit.videoUrl)} controls muted /> : edit.image && <img className="thumb cms-preview-thumb" src={mediaUrl(edit.image)} alt="preview" />}
             </label>
           )}
           {allowVideo && (
             <label className="cms-field">
               Video Link
-              <input className="input" value={edit.videoUrl || ""} placeholder="Optional video link" onChange={(event) => change("videoUrl", event.target.value)} />
+              <input className="input" value={edit.videoUrl || ""} placeholder="Optional direct MP4/WebM video link" onChange={(event) => { change("videoUrl", event.target.value); if (event.target.value) change("mediaType", "video"); }} />
             </label>
           )}
           {allowPdf && (
@@ -170,7 +181,7 @@ export default function CmsEditor({
               <td>#{row.id}</td>
               {!hideImage && (
                 <td>
-                  {row.image ? <img className="thumb" src={mediaUrl(row.image)} alt="" /> : <span className="badge">No image</span>}
+                  {row.videoUrl ? <video className="thumb" src={mediaUrl(row.videoUrl)} muted /> : row.image ? <img className="thumb" src={mediaUrl(row.image)} alt="" /> : <span className="badge">No media</span>}
                 </td>
               )}
               <td>{row.title || row.name || "-"}</td>

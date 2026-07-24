@@ -30,6 +30,7 @@ export default function Devotees() {
           onSearch={() => setApplied(filters)}
           onClear={() => { setFilters({ q: "", from: "", to: "" }); setApplied({ q: "", from: "", to: "" }); }}
           rows={filteredRows}
+          allRows={rows}
           title="Devotee Management Report"
           filename="devotee-report.csv"
         />

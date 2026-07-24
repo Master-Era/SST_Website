@@ -1,59 +1,414 @@
-import { useEffect, useState } from "react";
-import "./Hero.css";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-import mandirImg from "../assets/images/Madir,.jpg";
-import eventImg from "../assets/images/Event..jfif";
-import gaushalaImg from "../assets/images/Gaushala.jfif";
-import galleryImg from "../assets/images/images.jfif";
-import aboutImg from "../assets/images/Wo we Are.jpg";
+import "./HeroSection.css";
 
-const defaultHeroImages = [mandirImg, eventImg, gaushalaImg, galleryImg, aboutImg];
+/*
+  Temporary demo data.
 
-function Hero({ images = defaultHeroImages }) {
-  const heroImages = images.length ? images : defaultHeroImages;
-  const heroImageKey = heroImages.join("|");
-  const [index, setIndex] = useState(0);
+  Admin/API માંથી data આવતો હોય તો આ array remove કરીને
+  props અથવા API data use કરી શકો છો.
+
+  type:
+  - "image"
+  - "video"
+*/
+
+const defaultSlides = [
+  {
+    id: 1,
+    type: "image",
+    mediaUrl: "/images/hero/mandir-1.jpg",
+    altText: "Shreeji Samipya Trust Mandir",
+  },
+  {
+    id: 2,
+    type: "video",
+    mediaUrl: "/videos/mandir-video.mp4",
+    posterUrl: "/images/hero/video-poster.jpg",
+    altText: "Mandir Video",
+  },
+  {
+    id: 3,
+    type: "image",
+    mediaUrl: "/images/hero/mandir-2.jpg",
+    altText: "Temple View",
+  },
+];
+
+const getMediaType = (slide) => {
+  if (slide?.type) {
+    return slide.type.toLowerCase();
+  }
+
+  const mediaUrl =
+    slide?.mediaUrl ||
+    slide?.media_url ||
+    slide?.videoUrl ||
+    slide?.video_url ||
+    slide?.image ||
+    slide?.image_url ||
+    "";
+
+  const videoExtensions = [".mp4", ".webm", ".ogg", ".mov"];
+
+  const isVideo = videoExtensions.some((extension) =>
+    mediaUrl.toLowerCase().includes(extension)
+  );
+
+  return isVideo ? "video" : "image";
+};
+
+const getMediaUrl = (slide) => {
+  return (
+    slide?.mediaUrl ||
+    slide?.media_url ||
+    slide?.videoUrl ||
+    slide?.video_url ||
+    slide?.image ||
+    slide?.image_url ||
+    ""
+  );
+};
+
+const getPosterUrl = (slide) => {
+  return (
+    slide?.posterUrl ||
+    slide?.poster_url ||
+    slide?.thumbnail ||
+    slide?.thumbnail_url ||
+    ""
+  );
+};
+
+const HeroSection = ({
+  slides = defaultSlides,
+  imageDuration = 6000,
+}) => {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
+
+  const videoRefs = useRef([]);
+  const imageTimerRef = useRef(null);
+
+  const activeSlides = Array.isArray(slides)
+    ? slides.filter((slide) => {
+        const mediaUrl = getMediaUrl(slide);
+
+        const isActive =
+          slide?.is_active === undefined &&
+          slide?.isActive === undefined &&
+          slide?.active === undefined
+            ? true
+            : Boolean(
+                slide?.is_active ??
+                  slide?.isActive ??
+                  slide?.active
+              );
+
+        return mediaUrl && isActive;
+      })
+    : [];
+
+  const totalSlides = activeSlides.length;
+
+  const goToSlide = useCallback(
+    (index) => {
+      if (totalSlides === 0) {
+        return;
+      }
+
+      const nextIndex =
+        (index + totalSlides) % totalSlides;
+
+      setCurrentSlide(nextIndex);
+      setIsManuallyPaused(false);
+    },
+    [totalSlides]
+  );
+
+  const goToNextSlide = useCallback(() => {
+    goToSlide(currentSlide + 1);
+  }, [currentSlide, goToSlide]);
+
+  const goToPreviousSlide = useCallback(() => {
+    goToSlide(currentSlide - 1);
+  }, [currentSlide, goToSlide]);
+
+  /*
+    Current slide change થાય ત્યારે:
+
+    - બધા inactive videos pause થશે
+    - active video beginning થી play થશે
+    - active image માટે timer start થશે
+  */
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex((current) => (current + 1) % heroImages.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [heroImages.length]);
+    if (totalSlides === 0) {
+      return undefined;
+    }
+
+    if (currentSlide >= totalSlides) {
+      setCurrentSlide(0);
+      return undefined;
+    }
+
+    window.clearTimeout(imageTimerRef.current);
+
+    videoRefs.current.forEach((video, index) => {
+      if (!video) {
+        return;
+      }
+
+      if (index !== currentSlide) {
+        video.pause();
+        video.currentTime = 0;
+      }
+    });
+
+    const currentItem = activeSlides[currentSlide];
+    const currentType = getMediaType(currentItem);
+
+    if (currentType === "video") {
+      const currentVideo =
+        videoRefs.current[currentSlide];
+
+      if (currentVideo) {
+        currentVideo.currentTime = 0;
+
+        if (!isManuallyPaused) {
+          const playPromise = currentVideo.play();
+
+          if (
+            playPromise &&
+            typeof playPromise.catch === "function"
+          ) {
+            playPromise.catch((error) => {
+              console.warn(
+                "Video autoplay was blocked:",
+                error
+              );
+            });
+          }
+        }
+      }
+    } else if (!isManuallyPaused) {
+      imageTimerRef.current = window.setTimeout(() => {
+        goToNextSlide();
+      }, imageDuration);
+    }
+
+    return () => {
+      window.clearTimeout(imageTimerRef.current);
+    };
+  }, [
+    activeSlides,
+    currentSlide,
+    totalSlides,
+    imageDuration,
+    goToNextSlide,
+    isManuallyPaused,
+  ]);
+
+  /*
+    Browser tab hidden થાય ત્યારે video pause થશે.
+
+    User પાછો tab પર આવે ત્યારે active video ફરી play થશે.
+  */
 
   useEffect(() => {
-    setIndex(0);
-  }, [heroImageKey]);
+    const handleVisibilityChange = () => {
+      const activeVideo =
+        videoRefs.current[currentSlide];
+
+      if (document.hidden) {
+        activeVideo?.pause();
+        return;
+      }
+
+      if (
+        activeVideo &&
+        getMediaType(activeSlides[currentSlide]) ===
+          "video" &&
+        !isManuallyPaused
+      ) {
+        activeVideo.play().catch(() => {});
+      }
+    };
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    return () => {
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+    };
+  }, [
+    activeSlides,
+    currentSlide,
+    isManuallyPaused,
+  ]);
+
+  const handleVideoEnded = () => {
+    goToNextSlide();
+  };
+
+  const handleVideoError = () => {
+    console.error("Hero video could not be loaded.");
+    goToNextSlide();
+  };
+
+  const togglePlayPause = () => {
+    if (totalSlides === 0) {
+      return;
+    }
+
+    const currentItem = activeSlides[currentSlide];
+    const currentType = getMediaType(currentItem);
+
+    if (currentType === "video") {
+      const currentVideo =
+        videoRefs.current[currentSlide];
+
+      if (!currentVideo) {
+        return;
+      }
+
+      if (currentVideo.paused) {
+        currentVideo
+          .play()
+          .then(() => {
+            setIsManuallyPaused(false);
+          })
+          .catch(() => {});
+      } else {
+        currentVideo.pause();
+        setIsManuallyPaused(true);
+      }
+
+      return;
+    }
+
+    setIsManuallyPaused((previousValue) => {
+      return !previousValue;
+    });
+  };
+
+  if (totalSlides === 0) {
+    return (
+      <section className="hero-section">
+        <div className="hero-bg hero-empty">
+          <p>No hero media available.</p>
+        </div>
+      </section>
+    );
+  }
+
+  const currentMediaType = getMediaType(
+    activeSlides[currentSlide]
+  );
 
   return (
-    <section className="hero-section">
+    <section
+      className="hero-section"
+      aria-label="Website hero media slider"
+    >
       <div className="hero-bg">
-        {heroImages.map((image, imageIndex) => (
-          <div
-            key={image}
-            className={`hero-slide${imageIndex === index ? " active" : ""}`}
-            aria-hidden="true"
-          >
-            <img className="hero-slide-back" src={image} alt="" />
-            <img className="hero-slide-main" src={image} alt="" />
-          </div>
-        ))}
-      </div>
-      <div className="hero-overlay"></div>
+        {activeSlides.map((slide, index) => {
+          const mediaType = getMediaType(slide);
+          const mediaUrl = getMediaUrl(slide);
+          const posterUrl = getPosterUrl(slide);
 
-      <div className="hero-dots" aria-label="Hero image controls">
-        {heroImages.map((image, dotIndex) => (
-          <button
-            key={image}
-            className={dotIndex === index ? "active" : ""}
-            type="button"
-            onClick={() => setIndex(dotIndex)}
-            aria-label={`Show hero image ${dotIndex + 1}`}
-          />
-        ))}
+          const isActive = index === currentSlide;
+
+          return (
+            <div
+              key={slide.id || `${mediaUrl}-${index}`}
+              className={`hero-slide ${
+                isActive ? "active" : ""
+              }`}
+              aria-hidden={!isActive}
+            >
+              {mediaType === "video" ? (
+                <video
+                  ref={(element) => {
+                    videoRefs.current[index] = element;
+                  }}
+                  className="hero-media hero-video"
+                  src={mediaUrl}
+                  poster={posterUrl || undefined}
+                  muted
+                  playsInline
+                  preload={isActive ? "auto" : "metadata"}
+                  onEnded={handleVideoEnded}
+                  onError={handleVideoError}
+                  onClick={togglePlayPause}
+                  aria-label={
+                    slide.altText ||
+                    slide.alt_text ||
+                    "Hero video"
+                  }
+                />
+              ) : (
+                <img
+                  className="hero-media hero-image"
+                  src={mediaUrl}
+                  alt={
+                    slide.altText ||
+                    slide.alt_text ||
+                    "Hero image"
+                  }
+                  loading={index === 0 ? "eager" : "lazy"}
+                  fetchPriority={
+                    index === 0 ? "high" : "auto"
+                  }
+                  draggable="false"
+                />
+              )}
+
+              <div className="hero-media-shade" />
+            </div>
+          );
+        })}
+
+        {totalSlides > 1 && (
+          <>
+            <button
+              type="button"
+              className="hero-arrow hero-prev"
+              onClick={goToPreviousSlide}
+              aria-label="Previous slide"
+            >
+              &#10094;
+            </button>
+
+            <button
+              type="button"
+              className="hero-arrow hero-next"
+              onClick={goToNextSlide}
+              aria-label="Next slide"
+            >
+              &#10095;
+            </button>
+          </>
+        )}
+
+        {currentMediaType === "video" && (
+          <div className="hero-video-label">
+            Video
+          </div>
+        )}
       </div>
     </section>
   );
-}
+};
 
-export default Hero;
+export default HeroSection;
