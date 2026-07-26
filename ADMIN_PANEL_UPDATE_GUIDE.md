@@ -42,3 +42,8 @@ npm start
 
 ## Important
 The project source build was verified successfully. The existing `Hero.js` has two ESLint dependency warnings, but they do not prevent the application from compiling or running.
+
+
+
+
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass

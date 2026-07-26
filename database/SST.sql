@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS hari_bhakto (
   photo_data MEDIUMTEXT,
   id_proof_url VARCHAR(300),
   remarks TEXT,
-  status ENUM('new','verified','active','inactive') DEFAULT 'new',
+  status VARCHAR(30) NOT NULL DEFAULT 'Connected',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -15,6 +15,9 @@ async function ensureAdminTables() {
   await ignore('ALTER TABLE admin_users ADD COLUMN failed_attempts INT DEFAULT 0');
   await ignore('ALTER TABLE admin_users ADD COLUMN lock_count INT DEFAULT 0');
   await ignore('ALTER TABLE admin_users ADD COLUMN locked_until DATETIME NULL');
+  await ignore("ALTER TABLE hari_bhakto ADD COLUMN status VARCHAR(30) NOT NULL DEFAULT 'Connected'");
+  await ignore("ALTER TABLE hari_bhakto MODIFY COLUMN status VARCHAR(30) NOT NULL DEFAULT 'Connected'");
+  await ignore("UPDATE hari_bhakto SET status='Connected' WHERE status IS NULL OR TRIM(status)='' OR LOWER(TRIM(status)) IN ('new','verified','active')");
   await execute(`CREATE TABLE IF NOT EXISTS content_items (
     id INT PRIMARY KEY AUTO_INCREMENT, module VARCHAR(80), section VARCHAR(120), title VARCHAR(255),
     short_text TEXT, content TEXT, image_url VARCHAR(500), video_url VARCHAR(500), pdf_url VARCHAR(500),

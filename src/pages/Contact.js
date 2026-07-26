@@ -32,7 +32,7 @@ function Contact() {
     setStatus("Sending...");
     try {
       await apiPost("/inquiry", { ...form, inquiry_type: "contact" });
-      setStatus("Your inquiry has been submitted successfully.");
+      setStatus("Jay Swaminarayan! Your request has reached us successfully. Thank you for contacting us. We sincerely appreciate it.");
       setForm(initialForm);
     } catch (error) {
       setStatus(error.message);

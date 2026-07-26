@@ -13,6 +13,7 @@ import AboutEdit from "./pages/AboutEdit";
 import Inquiries from "./pages/Inquiries";
 import Donations from "./pages/Donations";
 import Devotees from "./pages/Devotees";
+import DevoteeDetails from "./pages/DevoteeDetails";
 import Settings from "./pages/Settings";
 import AdminUsers from "./pages/AdminUsers";
 import Logs from "./pages/Logs";
@@ -33,6 +34,7 @@ export default function AdminPanel(){ initStore(); return <Routes>
     <Route path="inquiries" element={<Inquiries/>}/>
     <Route path="donations" element={<Donations/>}/>
     <Route path="devotees" element={<Devotees/>}/>
+    <Route path="devotees/:id" element={<DevoteeDetails/>}/>
     <Route path="settings" element={<Settings/>}/>
     <Route path="users" element={<AdminUsers/>}/>
     <Route path="logs" element={<Logs/>}/>

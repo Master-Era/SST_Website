@@ -11,13 +11,13 @@ module.exports = {
   passwordSalt: process.env.ADMIN_PASSWORD_SALT || 'shreeji-samipya',
   uploadMaxMb: Number(process.env.UPLOAD_MAX_MB || 100),
   smtp: {
-    host: process.env.SMTP_HOST || '',
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT || 587),
     secure: String(process.env.SMTP_SECURE || 'false').toLowerCase() === 'true',
-    user: process.env.SMTP_USER || '',
-    pass: process.env.SMTP_PASS || '',
-    from: process.env.SMTP_FROM || '',
-    notifyTo: process.env.NOTIFICATION_EMAIL || '',
+    user: process.env.SMTP_USER || 'hariitsolution07@gmail.com',
+    pass: process.env.SMTP_PASS || 'bvaznnfkhfxgzegz',
+    from: process.env.SMTP_FROM || 'hariitsolution07@gmail.com',
+    notifyTo: process.env.NOTIFICATION_EMAIL || 'hariitsolution07@gmail.com',
   },
   db: {
     host: process.env.DB_HOST || 'localhost',

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { exportCSV, exportPrint } from "../utils/store";
+import { exportCSV, exportExcelWithImages, exportPrint } from "../utils/store";
 
 function Icon({ name }) {
   const common = { width: 19, height: 19, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true };
@@ -11,7 +11,7 @@ function Icon({ name }) {
   return <svg {...common}>{paths[name]}</svg>;
 }
 
-export default function RecordTools({ filters, setFilters, onSearch, onClear, rows, allRows = [], title, filename, totalLabel = "" }) {
+export default function RecordTools({ filters, setFilters, onSearch, onClear, rows, allRows = [], title, filename, totalLabel = "", includeImages = false }) {
   const [open, setOpen] = useState(null);
   const ref = useRef(null);
   useEffect(() => {
@@ -29,6 +29,7 @@ export default function RecordTools({ filters, setFilters, onSearch, onClear, ro
   const apply = () => { onSearch(); setOpen(null); };
   const download = (format) => {
     if (format === "pdf") exportPrint(title, rows, totalLabel);
+    else if (includeImages) exportExcelWithImages(filename, rows, title);
     else exportCSV(filename, rows);
     setOpen(null);
   };
@@ -56,7 +57,7 @@ export default function RecordTools({ filters, setFilters, onSearch, onClear, ro
           <div className="record-pop-head"><div><strong>Download Filtered Data</strong><small>Current search and date filters will be applied</small></div><button type="button" onClick={() => setOpen(null)}><Icon name="close"/></button></div>
           <div className="download-count"><b>{rows.length}</b><span>record(s) ready</span></div>
           {totalLabel && <p className="download-total">{totalLabel}</p>}
-          <button className="btn" type="button" onClick={() => download("excel")}>Download Excel / CSV</button>
+          <button className="btn" type="button" onClick={() => download("excel")}>Download Excel with Images</button>
           <button className="btn secondary" type="button" onClick={() => download("pdf")}>Download PDF / Print</button>
         </div>
       )}
