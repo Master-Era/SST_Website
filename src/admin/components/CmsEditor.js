@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { adminApi } from "../../services/api";
 import { mediaUrl } from "../../services/content";
-import { fileToDataUrl, nextId } from "../utils/store";
+import { fileToDataUrl, nextId, validateAdminImage } from "../utils/store";
 
 const normalizeOrder = (list = []) =>
   list.map((item, index) => ({ ...item, sortOrder: index + 1 }));
@@ -90,6 +90,15 @@ export default function CmsEditor({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (key !== "pdfData" && file.type.startsWith("image/")) {
+      const validation = validateAdminImage(file);
+      if (!validation.ok) {
+        window.alert(validation.message);
+        event.target.value = "";
+        return;
+      }
+    }
+
     if (key === "pdfData") {
       const data = await fileToDataUrl(file);
       change(key, data);
@@ -172,7 +181,7 @@ export default function CmsEditor({
           {!hideImage && (
             <label className="cms-field">{imageLabel}
               <input type="file" className="input" accept={allowVideoUpload ? "image/*,video/*" : "image/*"} onChange={fileChange} disabled={uploading} />
-              <small>{uploading ? "Uploading media..." : "No admin-side media count limit. Upload items one by one here."}</small>
+              <small>{uploading ? "Uploading media..." : "Images up to 5MB are allowed. Upload items one by one here."}</small>
               {edit.videoUrl ? <video className="thumb cms-preview-thumb" src={mediaUrl(edit.videoUrl)} controls muted /> : edit.image && <img className="thumb cms-preview-thumb" src={mediaUrl(edit.image)} alt="preview" />}
             </label>
           )}

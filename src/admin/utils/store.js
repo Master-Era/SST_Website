@@ -189,9 +189,25 @@ function normalizeWebsiteData(value) {
   return data;
 }
 
-export const fileToDataUrl = (file) => new Promise((resolve) => {
+export const MAX_ADMIN_IMAGE_SIZE = 5 * 1024 * 1024;
+
+export const validateAdminImage = (file) => {
+  if (!file) return { ok: false, message: "Please select an image." };
+  if (!String(file.type || "").startsWith("image/")) {
+    return { ok: false, message: "Please select a valid image file." };
+  }
+  if (file.size > MAX_ADMIN_IMAGE_SIZE) {
+    return { ok: false, message: `Image size must be 5MB or less. ${file.name || "Selected image"} is ${(file.size / (1024 * 1024)).toFixed(2)}MB.` };
+  }
+  return { ok: true, message: "" };
+};
+
+export const fileToDataUrl = (file) => new Promise((resolve, reject) => {
   if (!file) return resolve("");
-  const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(file);
+  const reader = new FileReader();
+  reader.onload = () => resolve(reader.result);
+  reader.onerror = () => reject(new Error("File could not be read."));
+  reader.readAsDataURL(file);
 });
 const getRowDate = (row) => String(row.created_at || row.createdAt || row.date || "").slice(0, 10);
 

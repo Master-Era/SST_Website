@@ -9,7 +9,7 @@ module.exports = {
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
   adminSecret: process.env.ADMIN_SECRET || 'shreeji-samipya-admin-secret',
   passwordSalt: process.env.ADMIN_PASSWORD_SALT || 'shreeji-samipya',
-  uploadMaxMb: Number(process.env.UPLOAD_MAX_MB || 100),
+  uploadMaxMb: Number(process.env.UPLOAD_MAX_MB || 5),
   smtp: {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: Number(process.env.SMTP_PORT || 587),

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { adminApi } from "../../services/api";
 import { mediaUrl } from "../../services/content";
-import { addLog, load, nextId, save } from "../utils/store";
+import { addLog, load, nextId, save, validateAdminImage } from "../utils/store";
 import { defaultWebsiteData } from "../data/defaultData";
 
 const normalizeOrder = (items = []) =>
@@ -54,6 +54,14 @@ export default function GalleryEdit() {
   const addImages = async (event) => {
     const files = [...(event.target.files || [])];
     if (!files.length) return;
+
+    const invalidFile = files.find((file) => !validateAdminImage(file).ok);
+    if (invalidFile) {
+      window.alert(validateAdminImage(invalidFile).message);
+      event.target.value = "";
+      return;
+    }
+
     setUploading(true);
     try {
       const uploaded = [];
@@ -73,6 +81,12 @@ export default function GalleryEdit() {
   const setCover = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const validation = validateAdminImage(file);
+    if (!validation.ok) {
+      window.alert(validation.message);
+      event.target.value = "";
+      return;
+    }
     setUploading(true);
     try {
       const cover = await uploadFile(file);
@@ -140,9 +154,9 @@ export default function GalleryEdit() {
             <div className="form-grid">
               <label>Album Name<input className="input" value={edit.title || ""} onChange={(event) => setEdit({ ...edit, title: event.target.value })} /></label>
               <label>Display Position<select className="select" value={edit.sortOrder || 1} onChange={(event) => setEdit({ ...edit, sortOrder: Number(event.target.value) })}>{Array.from({ length: albums.some((album) => album.id === edit.id) ? albums.length : albums.length + 1 }, (_, index) => <option key={index + 1} value={index + 1}>Position {index + 1}</option>)}</select></label>
-              <label>Cover Image<input className="input" type="file" accept="image/*" onChange={setCover} disabled={uploading} /></label>
+              <label>Cover Image (Max 5MB)<input className="input" type="file" accept="image/*" onChange={setCover} disabled={uploading} /></label>
               <label style={{ gridColumn: "1/-1" }}>Description<textarea className="textarea" value={edit.description || ""} onChange={(event) => setEdit({ ...edit, description: event.target.value })} /></label>
-              <label style={{ gridColumn: "1/-1" }}>Album Photos<input className="input" type="file" accept="image/*" multiple onChange={addImages} disabled={uploading} /><small>Select any number of photos in one upload. There is no admin-side photo count limit.</small></label>
+              <label style={{ gridColumn: "1/-1" }}>Album Photos<input className="input" type="file" accept="image/*" multiple onChange={addImages} disabled={uploading} /><small>Select any number of photos. Every image must be 5MB or less.</small></label>
             </div>
             <div className="album-photo-grid editable">
               {(edit.images || []).map((img, index) => (
