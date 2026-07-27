@@ -302,15 +302,15 @@ const HeroSection = ({
     });
   };
 
-  if (totalSlides === 0) {
-    return (
-      <section className="hero-section">
-        <div className="hero-bg hero-empty">
-          <p>No hero media available.</p>
-        </div>
-      </section>
-    );
-  }
+  // if (totalSlides === 0) {
+  //   return (
+  //     <section className="hero-section">
+  //       <div className="hero-bg hero-empty">
+  //         <p>No hero media available.</p>
+  //       </div>
+  //     </section>
+  //   );
+  // }
 
   const currentMediaType = getMediaType(
     activeSlides[currentSlide]
