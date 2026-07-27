@@ -77,7 +77,7 @@ function Footer() {
               </a>
 
               <a
-                href="https://wa.me/919601151124"
+                href="https://wa.me/917043355925"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="WhatsApp"
@@ -222,7 +222,7 @@ function Footer() {
                 <div>
                   <strong>Call Us</strong>
                   <a href="tel:+919876543210">
-                    +91 98765 43210
+                    +91 70433 55925
                   </a>
                 </div>
               </div>

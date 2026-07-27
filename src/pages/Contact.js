@@ -13,10 +13,10 @@ const initialForm = {
 };
 
 const contactDetails = [
-  ["Phone", "+91 98765 43210"],
-  ["WhatsApp", "+91 98765 43210"],
+  ["Phone", "+91 70433 55925"],
+  ["WhatsApp", "+91 70433 55925"],
   ["Email", "info@shreejisamipya.org"],
-  ["Address", "Shreeji Samipya Trust, Mandir Campus"],
+  ["Address", "Shreeji Samipya Trust, Hari Tirth Ashram, Opposite Central University of Gujarat, Kundhela, Taluka: Dabhoi, District: Vadodara, Pin Code:391107"],
 ];
 
 function Contact() {
