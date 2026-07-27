@@ -58,15 +58,11 @@ function Events() {
           anubhav male.`}
         </p>
 
-        <div className="selected-event-name" aria-live="polite">
-          Aa image: <strong>{selectedEvent.title}</strong>
-        </div>
       </section>
 
       <section className="events-gallery page-shell" aria-label="Event images">
         <div className="gallery-note">
           <h2>Event Images</h2>
-          <p>Badhi images full dekhashe, crop nahi thay. Niche medium size grid ma 3-4 images ek line ma ave che.</p>
         </div>
 
         <div className="event-image-grid">
