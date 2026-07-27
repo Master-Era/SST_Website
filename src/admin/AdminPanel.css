@@ -293,3 +293,14 @@ html:has(.admin-shell), body:has(.admin-shell), #root:has(.admin-shell){min-heig
   .devotee-detail-grid{grid-template-columns:1fr}
   .devotee-detail-item.full-width{grid-column:auto}
 }
+
+.admin-loading-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #f4f7fb;
+  color: #172033;
+  font-size: 18px;
+  font-weight: 800;
+}

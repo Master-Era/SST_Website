@@ -1,7 +1,7 @@
 import { defaultAdmins, defaultWebsiteData, defaultInquiries, defaultDonations, defaultDevotees, defaultSettings } from "../data/defaultData";
 import logoImg from "../../assets/images/shreeji-logo.png";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "/api";
 
 const keys = {
   admins: "mandir_admin_users",
@@ -60,58 +60,67 @@ const adminToken = () => localStorage.getItem("mandir_admin_token") || localStor
 
 async function putPageContent(pageKey, contentData) {
   const token = adminToken();
-  if (!token || token === "local-demo-token") return;
-  try {
-    await fetch(`${API_BASE_URL}/admin/page-content`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ page_key: pageKey, content_data: contentData }),
-    });
-  } catch {
-    // Keep local admin editing usable even if backend is temporarily offline.
+  if (!token || token === "local-demo-token") {
+    throw new Error("Please login again. Admin token is missing.");
   }
+
+  const response = await fetch(`${API_BASE_URL}/admin/page-content`, {
+    method: "PUT",
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ page_key: pageKey, content_data: contentData }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.message || payload.detail || "Website data could not be saved to the server.");
+  }
+  return payload;
 }
 
-function syncWebsiteToBackend(website) {
-  putPageContent("Admin Website Data", website);
+let websiteSyncQueue = Promise.resolve();
 
-  const home = website?.home || {};
-  const homeSections = home.sections || [];
-  const heroImages = (home.hero || []).map((item) => item.image).filter(Boolean).join("\n");
-
-  putPageContent("Home - Hero Images", {
-    title: "Home Hero Images",
-    imageUrls: heroImages,
-  });
-
-  homeSections.forEach((item) => {
-    if (!item?.title) return;
-    putPageContent(`Home - ${item.title}`, {
-      title: item.title,
-      description: item.content || "",
-      imageUrl: item.image || "",
+export function syncWebsiteToBackend(website) {
+  websiteSyncQueue = websiteSyncQueue
+    .catch(() => undefined)
+    .then(async () => {
+      await putPageContent("Admin Website Data", website);
+      window.dispatchEvent(new CustomEvent("website-server-saved", { detail: { ok: true } }));
+      return true;
+    })
+    .catch((error) => {
+      console.error("Website server save failed:", error);
+      window.dispatchEvent(new CustomEvent("website-server-saved", {
+        detail: { ok: false, message: error.message },
+      }));
+      window.alert(`Saved only in this browser. Server save failed: ${error.message}`);
+      throw error;
     });
-  });
 
-  const activityTitles = ["Blood Donation", "Health Care", "Educate Child", "Food Donation", "Child Education", "Health Camp"];
-  (website?.activity?.activities || []).forEach((item) => {
-    if (!item?.title || !activityTitles.includes(item.title)) return;
-    putPageContent(`Home Activity - ${item.title}`, {
-      title: item.title,
-      description: item.content || "",
-      imageUrl: item.image || "",
-    });
-  });
+  return websiteSyncQueue;
+}
 
-  if (home.founder) {
-    putPageContent("Home - Founder Image", {
-      title: home.founder.title || home.founder.name || "Founder",
-      description: home.founder.content || "",
-      imageUrl: home.founder.image || "",
-    });
+export async function bootstrapWebsiteFromBackend() {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/content/${encodeURIComponent("Admin Website Data")}?t=${Date.now()}`,
+      { cache: "no-store" }
+    );
+    if (!response.ok) return false;
+    const payload = await response.json();
+    const data = payload?.content_data ?? payload;
+    const parsed = typeof data === "string" ? JSON.parse(data) : data;
+    if (!parsed || typeof parsed !== "object" || !Object.keys(parsed).length) return false;
+    const normalized = normalizeWebsiteData(parsed);
+    normalized.__schemaVersion = WEBSITE_SCHEMA_VERSION;
+    localStorage.setItem(keys.website, JSON.stringify(normalized));
+    return true;
+  } catch (error) {
+    console.error("Could not load website data from server:", error);
+    return false;
   }
 }
 

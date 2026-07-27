@@ -1,14 +1,15 @@
 import { apiGet } from "./api";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "/api";
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
+const WEBSITE_CACHE_KEY = "mandir_website_data";
 
 export function parseContentData(value) {
   if (!value) return {};
   if (typeof value === "object") return value;
   try {
     return JSON.parse(value);
-  } catch (error) {
+  } catch {
     return {};
   }
 }
@@ -21,55 +22,42 @@ export function mediaUrl(url) {
   return url;
 }
 
-export async function getContentMap() {
-  const localMap = getLocalContentMap();
+function getLocalContentMap() {
   try {
-    const rows = await apiGet("/content");
-    const remoteMap = rows.reduce((map, row) => {
-      map[row.page_key] = parseContentData(row.content_data);
-      return map;
-    }, {});
-    return { ...remoteMap, ...localMap };
+    const website = JSON.parse(localStorage.getItem(WEBSITE_CACHE_KEY) || "null");
+    return website ? { "Admin Website Data": website } : {};
   } catch {
-    return localMap;
+    return {};
   }
 }
 
-function getLocalContentMap() {
+export async function getRemoteWebsiteData() {
+  const response = await apiGet(
+    `/content/${encodeURIComponent("Admin Website Data")}?t=${Date.now()}`
+  );
+  const website = parseContentData(response?.content_data ?? response);
+  if (!website || Object.keys(website).length === 0) return null;
+  localStorage.setItem(WEBSITE_CACHE_KEY, JSON.stringify(website));
+  return website;
+}
+
+export async function getContentMap() {
   try {
-    const website = JSON.parse(localStorage.getItem("mandir_website_data") || "null");
-    if (!website) return {};
-    const map = { "Admin Website Data": website };
-    const home = website.home || {};
-    map["Home - Hero Images"] = {
-      title: "Home Hero Images",
-      imageUrls: (home.hero || []).map((item) => item.image).filter(Boolean).join("\n"),
-    };
-    (home.sections || []).forEach((item) => {
-      if (!item?.title) return;
-      map[`Home - ${item.title}`] = {
-        title: item.title,
-        description: item.content || "",
-        imageUrl: item.image || "",
-      };
-    });
-    (website.activity?.activities || []).forEach((item) => {
-      if (!item?.title) return;
-      map[`Home Activity - ${item.title}`] = {
-        title: item.title,
-        description: item.content || "",
-        imageUrl: item.image || "",
-      };
-    });
-    if (home.founder) {
-      map["Home - Founder Image"] = {
-        title: home.founder.title || home.founder.name || "Founder",
-        description: home.founder.content || "",
-        imageUrl: home.founder.image || "",
-      };
+    const rows = await apiGet(`/content?t=${Date.now()}`);
+    const remoteMap = (Array.isArray(rows) ? rows : []).reduce((map, row) => {
+      map[row.page_key] = parseContentData(row.content_data);
+      return map;
+    }, {});
+
+    const website = remoteMap["Admin Website Data"];
+    if (website && Object.keys(website).length) {
+      localStorage.setItem(WEBSITE_CACHE_KEY, JSON.stringify(website));
     }
-    return map;
-  } catch {
-    return {};
+
+    // Server/database is always the source of truth. Local storage is only a fallback.
+    return Object.keys(remoteMap).length ? remoteMap : getLocalContentMap();
+  } catch (error) {
+    console.error("Live website content could not be loaded:", error);
+    return getLocalContentMap();
   }
 }

@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const API_BASE_URL = process.env.REACT_APP_API_URL || "/api";
 
 export const getToken = () => localStorage.getItem("mandir_admin_token");
 export const setToken = (token) => localStorage.setItem("mandir_admin_token", token);
@@ -12,6 +12,7 @@ export const logout = () => {
 async function request(path, options = {}) {
   const isForm = options.body instanceof FormData;
   const response = await fetch(`${API_BASE_URL}${path}`, {
+    cache: options.cache || "no-store",
     ...options,
     headers: {
       ...(isForm ? {} : { "Content-Type": "application/json" }),
