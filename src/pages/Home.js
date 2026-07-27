@@ -217,9 +217,9 @@ function Home() {
             <p>Open the founder introduction and Guru Parampara details from the About page.</p>
           </div>
           <a className="founder-single-card" href="/about#founder">
-            <img src={mediaUrl(founderContent.image || founderContent.imageUrl) || logoImg} alt={founderContent.title || "Guruhari Guidance"} />
-            <span>Founder Guidance</span>
-            <strong>{founderContent.title || "Guruhari Guidance"}</strong>
+            <img src={mediaUrl(founderContent.image || founderContent.imageUrl) || logoImg} />
+
+            <strong>{founderContent.title || "Guru Parampara"}</strong>
           </a>
         </div>
       </section>

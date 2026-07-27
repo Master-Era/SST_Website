@@ -10,8 +10,6 @@
 }
 
 .hari-page .page-hero {
-  min-height: 180px;
-  display: flex;
   align-items: center;
   background:
     linear-gradient(110deg, rgba(134, 27, 27, 0.658), rgba(255, 107, 0, 0.78)),
