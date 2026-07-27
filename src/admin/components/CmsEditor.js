@@ -1,7 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { adminApi } from "../../services/api";
 import { mediaUrl } from "../../services/content";
 import { fileToDataUrl, nextId } from "../utils/store";
+
+const normalizeOrder = (list = []) =>
+  list.map((item, index) => ({ ...item, sortOrder: index + 1 }));
+
+const moveInArray = (list, fromIndex, toIndex) => {
+  const output = [...list];
+  const [item] = output.splice(fromIndex, 1);
+  output.splice(toIndex, 0, item);
+  return normalizeOrder(output);
+};
 
 export default function CmsEditor({
   title,
@@ -15,10 +25,15 @@ export default function CmsEditor({
   hideImage = false,
   inlineEditor = false,
 }) {
-  const [rows, setRows] = useState(items || []);
+  const [rows, setRows] = useState(() => normalizeOrder(items || []));
   const [edit, setEdit] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
-  const blank = {
+  useEffect(() => {
+    setRows(normalizeOrder(items || []));
+  }, [items]);
+
+  const blank = useMemo(() => ({
     id: nextId(rows),
     title: "",
     content: "",
@@ -26,24 +41,49 @@ export default function CmsEditor({
     videoUrl: "",
     mediaType: "image",
     active: true,
+    sortOrder: rows.length + 1,
     createdAt: new Date().toISOString().slice(0, 10),
+  }), [rows]);
+
+  const change = (key, value) =>
+    setEdit((current) => ({ ...current, [key]: value }));
+
+  const persistRows = (nextRows) => {
+    const normalized = normalizeOrder(nextRows);
+    setRows(normalized);
+    onSave(normalized);
   };
 
-  const change = (key, value) => setEdit((current) => ({ ...current, [key]: value }));
-
   const saveRow = () => {
+    if (!edit) return;
+
     const exists = rows.some((row) => row.id === edit.id);
-    const output = exists ? rows.map((row) => (row.id === edit.id ? edit : row)) : [edit, ...rows];
-    setRows(output);
-    onSave(output);
+    const requestedPosition = Math.min(
+      Math.max(Number(edit.sortOrder) || rows.length + 1, 1),
+      exists ? rows.length : rows.length + 1
+    );
+
+    const withoutCurrent = rows.filter((row) => row.id !== edit.id);
+    withoutCurrent.splice(requestedPosition - 1, 0, {
+      ...edit,
+      sortOrder: requestedPosition,
+    });
+
+    persistRows(withoutCurrent);
     setEdit(null);
   };
 
   const deleteRow = (id) => {
     if (!window.confirm("Delete this item?")) return;
-    const output = rows.filter((row) => row.id !== id);
-    setRows(output);
-    onSave(output);
+    persistRows(rows.filter((row) => row.id !== id));
+  };
+
+  const moveRow = (id, direction) => {
+    const fromIndex = rows.findIndex((row) => row.id === id);
+    if (fromIndex < 0) return;
+    const toIndex = direction === "up" ? fromIndex - 1 : fromIndex + 1;
+    if (toIndex < 0 || toIndex >= rows.length) return;
+    persistRows(moveInArray(rows, fromIndex, toIndex));
   };
 
   const fileChange = async (event, key = "image") => {
@@ -57,19 +97,31 @@ export default function CmsEditor({
       return;
     }
 
-    const targetKey = allowVideoUpload && file.type.startsWith("video/") ? "videoUrl" : key;
+    const targetKey =
+      allowVideoUpload && file.type.startsWith("video/") ? "videoUrl" : key;
+
+    setUploading(true);
     try {
       const uploaded = await adminApi.upload(file);
       change(targetKey, uploaded.url || uploaded.image_url || uploaded.path);
       if (allowVideoUpload) {
         change("mediaType", targetKey === "videoUrl" ? "video" : "image");
-        if (targetKey === "videoUrl") change("image", edit.image || "");
+        if (targetKey === "videoUrl") change("image", edit?.image || "");
         else change("videoUrl", "");
       }
-    } catch {
-      const data = await fileToDataUrl(file);
-      change(targetKey, data);
-      if (allowVideoUpload) change("mediaType", targetKey === "videoUrl" ? "video" : "image");
+    } catch (error) {
+      try {
+        const data = await fileToDataUrl(file);
+        change(targetKey, data);
+        if (allowVideoUpload) {
+          change("mediaType", targetKey === "videoUrl" ? "video" : "image");
+        }
+      } catch {
+        window.alert(error?.message || "Media upload failed.");
+      }
+    } finally {
+      setUploading(false);
+      event.target.value = "";
     }
   };
 
@@ -77,7 +129,7 @@ export default function CmsEditor({
     <>
       <div className="toolbar cms-modal-head">
         <div>
-          <h2>{edit.id ? `Edit #${edit.id}` : "Add"}</h2>
+          <h2>{rows.some((row) => row.id === edit.id) ? `Edit #${edit.id}` : "Add New"}</h2>
           <p className="admin-muted">{title}</p>
         </div>
         <button className="btn secondary" type="button" onClick={() => setEdit(null)}>Close</button>
@@ -86,59 +138,61 @@ export default function CmsEditor({
       <div className="cms-modal-body">
         <div className="form-grid cms-form-grid">
           {fields.includes("title") && (
-            <label className="cms-field">
-              Title
+            <label className="cms-field">Title
               <input className="input" value={edit.title || ""} onChange={(event) => change("title", event.target.value)} />
             </label>
           )}
           {fields.includes("name") && (
-            <label className="cms-field">
-              Name
+            <label className="cms-field">Name
               <input className="input" value={edit.name || ""} onChange={(event) => change("name", event.target.value)} />
             </label>
           )}
           {fields.includes("year") && (
-            <label className="cms-field">
-              Year
+            <label className="cms-field">Year
               <input className="input" value={edit.year || ""} onChange={(event) => change("year", event.target.value)} />
             </label>
           )}
           {fields.includes("date") && (
-            <label className="cms-field">
-              Date
+            <label className="cms-field">Date
               <input type="date" className="input" value={edit.date || edit.createdAt || ""} onChange={(event) => change("date", event.target.value)} />
             </label>
           )}
+
+          <label className="cms-field">Display Position
+            <select className="select" value={edit.sortOrder || 1} onChange={(event) => change("sortOrder", Number(event.target.value))}>
+              {Array.from({ length: rows.some((row) => row.id === edit.id) ? rows.length : rows.length + 1 }, (_, index) => (
+                <option key={index + 1} value={index + 1}>
+                  Position {index + 1}{index === 0 ? " - First" : index === rows.length ? " - Last" : ""}
+                </option>
+              ))}
+            </select>
+            <small>Select exactly where this card should appear.</small>
+          </label>
+
           {!hideImage && (
-            <label className="cms-field">
-              {imageLabel}
-              <input type="file" className="input" accept={allowVideoUpload ? "image/*,video/mp4,video/webm,video/ogg" : "image/*"} onChange={fileChange} />
-              {allowVideoUpload && <small>Upload JPG/PNG poster or MP4/WebM video clip.</small>}
+            <label className="cms-field">{imageLabel}
+              <input type="file" className="input" accept={allowVideoUpload ? "image/*,video/*" : "image/*"} onChange={fileChange} disabled={uploading} />
+              <small>{uploading ? "Uploading media..." : "No admin-side media count limit. Upload items one by one here."}</small>
               {edit.videoUrl ? <video className="thumb cms-preview-thumb" src={mediaUrl(edit.videoUrl)} controls muted /> : edit.image && <img className="thumb cms-preview-thumb" src={mediaUrl(edit.image)} alt="preview" />}
             </label>
           )}
           {allowVideo && (
-            <label className="cms-field">
-              Video Link
-              <input className="input" value={edit.videoUrl || ""} placeholder="Optional direct MP4/WebM video link" onChange={(event) => { change("videoUrl", event.target.value); if (event.target.value) change("mediaType", "video"); }} />
+            <label className="cms-field">Video Link
+              <input className="input" value={edit.videoUrl || ""} placeholder="Optional direct video link" onChange={(event) => { change("videoUrl", event.target.value); if (event.target.value) change("mediaType", "video"); }} />
             </label>
           )}
           {allowPdf && (
-            <label className="cms-field">
-              PDF Upload
+            <label className="cms-field">PDF Upload
               <input type="file" className="input" accept="application/pdf" onChange={(event) => fileChange(event, "pdfData")} />
               <small>{edit.pdfName}</small>
             </label>
           )}
-          <label className="cms-field">
-            Status
+          <label className="cms-field">Status
             <select className="select" value={edit.active !== false ? "Active" : "Hide"} onChange={(event) => change("active", event.target.value === "Active")}>
-              <option>Active</option>
-              <option>Hide</option>
+              <option>Active</option><option>Hide</option>
             </select>
           </label>
-          <label className="cms-field cms-content-field">
-            Content
+          <label className="cms-field cms-content-field">Content
             <textarea className="textarea" value={edit.content || ""} onChange={(event) => change("content", event.target.value)} />
           </label>
         </div>
@@ -146,7 +200,7 @@ export default function CmsEditor({
 
       <div className="cms-modal-footer">
         <button className="btn secondary" type="button" onClick={() => setEdit(null)}>Cancel</button>
-        <button className="btn" type="button" onClick={saveRow}>Save Changes</button>
+        <button className="btn" type="button" onClick={saveRow} disabled={uploading}>{uploading ? "Uploading..." : "Save Changes"}</button>
       </div>
     </>
   );
@@ -158,43 +212,33 @@ export default function CmsEditor({
         <button className="btn" type="button" onClick={() => setEdit(blank)}>+ Add New</button>
       </div>
 
-      {edit && inlineEditor && (
-        <div className="cms-inline-editor">
-          {editorForm}
-        </div>
-      )}
+      {edit && inlineEditor && <div className="cms-inline-editor">{editorForm}</div>}
 
-      <table className="table cms-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            {!hideImage && <th>Image</th>}
-            <th>Title</th>
-            <th>Content</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td>#{row.id}</td>
-              {!hideImage && (
+      <div className="cms-table-scroll">
+        <table className="table cms-table">
+          <thead><tr><th>Position</th><th>ID</th>{!hideImage && <th>Image</th>}<th>Title</th><th>Content</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={row.id}>
+                <td><span className="cms-position-number">{index + 1}</span></td>
+                <td>#{row.id}</td>
+                {!hideImage && <td>{row.videoUrl ? <video className="thumb" src={mediaUrl(row.videoUrl)} muted /> : row.image ? <img className="thumb" src={mediaUrl(row.image)} alt="" /> : <span className="badge">No media</span>}</td>}
+                <td>{row.title || row.name || "-"}</td>
+                <td>{String(row.content || "").slice(0, 80)}{row.content ? "..." : ""}</td>
+                <td><span className="badge">{row.active !== false ? "Active" : "Hide"}</span></td>
                 <td>
-                  {row.videoUrl ? <video className="thumb" src={mediaUrl(row.videoUrl)} muted /> : row.image ? <img className="thumb" src={mediaUrl(row.image)} alt="" /> : <span className="badge">No media</span>}
+                  <div className="cms-row-actions">
+                    <button className="cms-move-btn" type="button" onClick={() => moveRow(row.id, "up")} disabled={index === 0} title="Move up">↑</button>
+                    <button className="cms-move-btn" type="button" onClick={() => moveRow(row.id, "down")} disabled={index === rows.length - 1} title="Move down">↓</button>
+                    <button className="btn secondary" type="button" onClick={() => setEdit({ ...row, sortOrder: index + 1 })}>Edit</button>
+                    <button className="btn danger" type="button" onClick={() => deleteRow(row.id)}>Delete</button>
+                  </div>
                 </td>
-              )}
-              <td>{row.title || row.name || "-"}</td>
-              <td>{String(row.content || "").slice(0, 80)}{row.content ? "..." : ""}</td>
-              <td><span className="badge">{row.active !== false ? "Active" : "Hide"}</span></td>
-              <td>
-                <button className="btn secondary" type="button" onClick={() => setEdit(row)}>Edit</button>{" "}
-                <button className="btn danger" type="button" onClick={() => deleteRow(row.id)}>Delete</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {edit && !inlineEditor && (
         <div className="modal-bg cms-modal-bg" onMouseDown={(event) => { if (event.target === event.currentTarget) setEdit(null); }}>

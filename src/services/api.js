@@ -51,6 +51,7 @@ export const adminApi = {
   list: (module) => apiGet(`/admin/${module}`),
   create: (module, data) => apiPost(`/admin/${module}`, data),
   update: (module, id, data) => apiPut(`/admin/${module}/${id}`, data),
+  move: (module, id, direction) => apiPut(`/admin/${module}/${id}/move`, { direction }),
   remove: (module, id) => apiDelete(`/admin/${module}/${id}`),
   upload: (file) => {
     const form = new FormData();

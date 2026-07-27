@@ -13,7 +13,7 @@ const keys = {
   logs: "mandir_logs",
   notifications: "mandir_notifications",
 };
-const WEBSITE_SCHEMA_VERSION = 4;
+const WEBSITE_SCHEMA_VERSION = 5;
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
 export const load = (key, fallback) => {
@@ -125,6 +125,32 @@ function fillItem(item = {}, fallback = {}) {
   };
 }
 
+function mergeCollection(current = [], defaults = []) {
+  const source = Array.isArray(current) ? current : [];
+  const mergedDefaults = defaults.map((fallback, index) => {
+    const matched = source.find((row) =>
+      (fallback.key && row.key === fallback.key) ||
+      (fallback.title && row.title === fallback.title) ||
+      Number(row.id) === Number(fallback.id)
+    ) || source[index];
+    return fillItem(matched || {}, fallback);
+  });
+
+  const usedIds = new Set(mergedDefaults.map((item) => String(item.id)));
+  const usedKeys = new Set(mergedDefaults.map((item) => item.key).filter(Boolean));
+  const usedTitles = new Set(mergedDefaults.map((item) => item.title).filter(Boolean));
+  const extras = source.filter((item) =>
+    !usedIds.has(String(item.id)) &&
+    !(item.key && usedKeys.has(item.key)) &&
+    !(item.title && usedTitles.has(item.title))
+  );
+
+  return [...mergedDefaults, ...extras].map((item, index) => ({
+    ...item,
+    sortOrder: index + 1,
+  }));
+}
+
 function normalizeWebsiteData(value) {
   const data = clone(value || {});
   const defaults = clone(defaultWebsiteData);
@@ -132,49 +158,37 @@ function normalizeWebsiteData(value) {
   data.activity = data.activity || defaults.activity;
   data.events = data.events || defaults.events;
   data.news = data.news || defaults.news;
-  data.news.latest = data.news.latest || defaults.news.latest;
-  data.news.announcements = data.news.announcements || defaults.news.announcements;
-  data.news.notices = data.news.notices || defaults.news.notices;
-  data.news.customSections = data.news.customSections || defaults.news.customSections || [];
   data.gallery = data.gallery || defaults.gallery;
   data.about = data.about || defaults.about;
 
-  const legacyHomeTitles = (data.home.sections || []).map((item) => item.title).join("|");
-  if (legacyHomeTitles === "Shreeji Samipya Sanstha|Activities|Events") {
-    data.home.sections = defaults.home.sections;
-  } else {
-    data.home.sections = defaults.home.sections.map((fallback, index) => {
-      const item = (data.home.sections || []).find((row) => row.title === fallback.title || row.key === fallback.key) || (data.home.sections || [])[index];
-      return fillItem(item, fallback);
-    });
-  }
-
-  data.home.hero = defaults.home.hero.map((fallback, index) => fillItem((data.home.hero || [])[index], fallback));
+  data.home.sections = mergeCollection(data.home.sections, defaults.home.sections);
+  data.home.hero = mergeCollection(data.home.hero, defaults.home.hero);
   data.home.founder = fillItem(data.home.founder, defaults.home.founder);
-  data.activity.activities = defaults.activity.activities.map((fallback, index) => {
-    const item = (data.activity.activities || []).find((row) => row.title === fallback.title) || (data.activity.activities || [])[index];
-    return fillItem(item, fallback);
-  });
-  data.activity.socialCare = defaults.activity.socialCare.map((fallback, index) => {
-    const item = (data.activity.socialCare || []).find((row) => row.title === fallback.title) || (data.activity.socialCare || [])[index];
-    return fillItem(item, fallback);
-  });
-  data.events.items = defaults.events.items.map((fallback, index) => fillItem((data.events.items || [])[index], fallback));
-  data.about.sections = defaults.about.sections.map((fallback, index) => {
-    const item = (data.about.sections || []).find((row) => row.title === fallback.title) || (data.about.sections || [])[index];
-    return fillItem(item, fallback);
-  }).filter((item) => item.title !== "Founder");
-  data.gallery.albums = (data.gallery.albums || defaults.gallery.albums).map((album, index) => {
-    const fallback = defaults.gallery.albums[index] || defaults.gallery.albums[0];
+  data.activity.activities = mergeCollection(data.activity.activities, defaults.activity.activities);
+  data.activity.socialCare = mergeCollection(data.activity.socialCare, defaults.activity.socialCare);
+  data.events.items = mergeCollection(data.events.items, defaults.events.items);
+  data.about.sections = mergeCollection(data.about.sections, defaults.about.sections)
+    .filter((item) => item.title !== "Founder")
+    .map((item, index) => ({ ...item, sortOrder: index + 1 }));
+
+  data.news.latest = mergeCollection(data.news.latest, defaults.news.latest || []);
+  data.news.announcements = mergeCollection(data.news.announcements, defaults.news.announcements || []);
+  data.news.notices = mergeCollection(data.news.notices, defaults.news.notices || []);
+  data.news.customSections = mergeCollection(data.news.customSections, defaults.news.customSections || []);
+
+  data.gallery.albums = (data.gallery.albums || defaults.gallery.albums || []).map((album, index) => {
+    const fallback = defaults.gallery.albums[index] || {};
     return {
       ...fallback,
       ...album,
-      cover: album.cover || fallback.cover,
-      images: album.images?.length ? album.images : fallback.images,
+      sortOrder: index + 1,
+      cover: album.cover || fallback.cover || "",
+      images: album.images?.length ? album.images : (fallback.images || []),
     };
   });
   return data;
 }
+
 export const fileToDataUrl = (file) => new Promise((resolve) => {
   if (!file) return resolve("");
   const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.readAsDataURL(file);
