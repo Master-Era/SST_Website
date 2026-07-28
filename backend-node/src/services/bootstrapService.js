@@ -3,7 +3,21 @@ const { hashPassword } = require('./authService');
 
 async function ignore(sql) { try { await execute(sql); } catch (_) {} }
 
-async function ensureAdminTables() {
+/*
+  IMPORTANT FIX:
+  ensureAdminTables() used to run its ~13 CREATE TABLE / ALTER TABLE / INSERT
+  statements on EVERY single API call (every homepage load, every admin
+  save, every login). That added a real, consistent delay to every request
+  because each statement is a separate round trip to MySQL.
+
+  These statements only ever need to run ONCE per running server process
+  (they are schema setup, not per-request logic). We cache the result in
+  bootstrapPromise so every call after the very first one resolves
+  instantly instead of re-running the whole migration again.
+*/
+let bootstrapPromise = null;
+
+async function runBootstrapOnce() {
   await execute(`CREATE TABLE IF NOT EXISTS admin_users (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(150), username VARCHAR(100) UNIQUE, password_hash VARCHAR(255),
@@ -41,4 +55,17 @@ async function ensureAdminTables() {
       ['Super Admin', 'superadmin', hashPassword('Master@123'), 'super_admin', 'active']);
   }
 }
+
+async function ensureAdminTables() {
+  if (!bootstrapPromise) {
+    bootstrapPromise = runBootstrapOnce().catch((error) => {
+      // If it failed, clear the cache so the next request can retry
+      // instead of being stuck on a permanently-rejected promise.
+      bootstrapPromise = null;
+      throw error;
+    });
+  }
+  return bootstrapPromise;
+}
+
 module.exports = { ensureAdminTables };

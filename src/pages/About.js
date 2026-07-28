@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import "./About.css";
 import { getContentMap, mediaUrl } from "../services/content";
+import PageLoader from "../components/PageLoader";
 import trustImg from "../assets/images/Wo we Are.jpg";
 import mandirImg from "../assets/images/Madir,.jpg";
 import activityImg from "../assets/images/Event..jfif";
@@ -152,8 +153,12 @@ function About() {
   const [activeId, setActiveId] = useState(getInitialSection);
   const [founderMenuOpen, setFounderMenuOpen] = useState(false);
   const [adminWebsite, setAdminWebsite] = useState(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
   useEffect(() => {
-    getContentMap().then((map) => setAdminWebsite(map["Admin Website Data"] || null)).catch(() => setAdminWebsite(null));
+    getContentMap()
+      .then((map) => setAdminWebsite(map["Admin Website Data"] || null))
+      .catch(() => setAdminWebsite(null))
+      .finally(() => setDataLoaded(true));
   }, []);
   const liveSections = useMemo(() => adminWebsite?.about?.sections?.length
     ? adminWebsite.about.sections.filter((item) => String(item.title || "").toLowerCase() !== "founder").map((item, index) => ({
@@ -201,6 +206,14 @@ function About() {
       setFounderMenuOpen(false);
     }
   }, [location.hash, location.pathname, liveSections]);
+
+  if (!dataLoaded) {
+    return (
+      <main className="about-page">
+        <PageLoader message="Loading..." />
+      </main>
+    );
+  }
 
   return (
     <main className="about-page">

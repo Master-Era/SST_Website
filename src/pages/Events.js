@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./Events.css";
 import { getContentMap, mediaUrl } from "../services/content";
+import PageLoader from "../components/PageLoader";
 import mandirImg from "../assets/images/Madir,.jpg";
 import eventImg from "../assets/images/Event..jfif";
 import gaushalaImg from "../assets/images/Gaushala.jfif";
@@ -24,8 +25,12 @@ const eventImages = [
 
 function Events() {
   const [adminWebsite, setAdminWebsite] = useState(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
   useEffect(() => {
-    getContentMap().then((map) => setAdminWebsite(map["Admin Website Data"] || null)).catch(() => setAdminWebsite(null));
+    getContentMap()
+      .then((map) => setAdminWebsite(map["Admin Website Data"] || null))
+      .catch(() => setAdminWebsite(null))
+      .finally(() => setDataLoaded(true));
   }, []);
   const liveEvents = useMemo(() => {
     const saved = adminWebsite?.events?.items || [];
@@ -41,6 +46,14 @@ function Events() {
   useEffect(() => {
     setSelectedEvent(liveEvents[0] || eventImages[0]);
   }, [liveEvents]);
+
+  if (!dataLoaded) {
+    return (
+      <main className="events-page">
+        <PageLoader message="Loading..." />
+      </main>
+    );
+  }
 
   return (
     <main className="events-page">

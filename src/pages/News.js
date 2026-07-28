@@ -3,12 +3,17 @@ import { useEffect, useMemo, useState } from "react";
 import "./News.css";
 import { newsCategories, newsItems } from "../data/newsData";
 import { getContentMap } from "../services/content";
+import PageLoader from "../components/PageLoader";
 
 function News() {
   const [adminWebsite, setAdminWebsite] = useState(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    getContentMap().then((map) => setAdminWebsite(map["Admin Website Data"] || null)).catch(() => setAdminWebsite(null));
+    getContentMap()
+      .then((map) => setAdminWebsite(map["Admin Website Data"] || null))
+      .catch(() => setAdminWebsite(null))
+      .finally(() => setDataLoaded(true));
   }, []);
 
   const liveNews = useMemo(() => {
@@ -24,6 +29,14 @@ function News() {
 
   const categories = liveNews ? [...new Set(liveNews.map((item) => item.category))] : newsCategories;
   const source = liveNews || newsItems;
+
+  if (!dataLoaded) {
+    return (
+      <main className="news-page">
+        <PageLoader message="Loading..." />
+      </main>
+    );
+  }
 
   return (
     <main className="news-page">

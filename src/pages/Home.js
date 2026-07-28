@@ -1,6 +1,7 @@
 import "./Home.css";
 import { useEffect, useMemo, useState } from "react";
 import Hero from "../components/Hero";
+import PageLoader from "../components/PageLoader";
 import { getContentMap, mediaUrl } from "../services/content";
 import aboutImg from "../assets/images/Wo we Are.jpg";
 import activityImg from "../assets/images/Gaushala.jfif";
@@ -64,14 +65,37 @@ const activityCards = [
 ];
 
 function Home() {
-  const [contentMap, setContentMap] = useState({});
+  /*
+    contentMap starts as `null` (not `{}`) so we can tell the difference
+    between "still loading from the server" and "loaded, but admin has not
+    added anything yet". While it is `null` we do not render the hero or
+    card sections at all, so the site never shows the old/default image
+    for a moment and then swaps to the admin image - it only ever shows
+    the admin content, once, after it has actually arrived.
+  */
+  const [contentMap, setContentMap] = useState(null);
 
   useEffect(() => {
-    getContentMap().then(setContentMap).catch(() => setContentMap({}));
+    let isMounted = true;
+
+    getContentMap()
+      .then((data) => {
+        if (isMounted) setContentMap(data || {});
+      })
+      .catch(() => {
+        if (isMounted) setContentMap({});
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  const isLoading = contentMap === null;
+  const safeContentMap = contentMap || {};
+
   const heroSlides = useMemo(() => {
-    const adminHero = contentMap["Admin Website Data"]?.home?.hero || [];
+    const adminHero = safeContentMap["Admin Website Data"]?.home?.hero || [];
     const adminSlides = adminHero
       .filter((item) => item.active !== false)
       .map((item) => ({
@@ -82,15 +106,15 @@ function Home() {
       .filter((item) => item.image || item.videoUrl);
     if (adminSlides.length) return adminSlides;
 
-    const imageText = contentMap["Home - Hero Images"]?.imageUrls || contentMap["Home - Hero Images"]?.imageUrl || "";
+    const imageText = safeContentMap["Home - Hero Images"]?.imageUrls || safeContentMap["Home - Hero Images"]?.imageUrl || "";
     return String(imageText)
       .split(/\n|,/)
       .map((item, index) => ({ id: `legacy-${index}`, image: mediaUrl(item.trim()), active: true }))
       .filter((item) => item.image);
-  }, [contentMap]);
+  }, [safeContentMap]);
 
   const dynamicTrustCards = useMemo(() => {
-    const adminSections = contentMap["Admin Website Data"]?.home?.sections || [];
+    const adminSections = safeContentMap["Admin Website Data"]?.home?.sections || [];
     if (adminSections.length) {
       return adminSections
         .filter((item) => item.active !== false)
@@ -102,7 +126,7 @@ function Home() {
         }));
     }
     return trustCards.map((card) => {
-      const saved = contentMap[`Home - ${card.title}`] || {};
+      const saved = safeContentMap[`Home - ${card.title}`] || {};
       return {
         ...card,
         title: saved.title || card.title,
@@ -110,10 +134,10 @@ function Home() {
         image: mediaUrl(saved.imageUrl) || card.image,
       };
     });
-  }, [contentMap]);
+  }, [safeContentMap]);
 
   const dynamicActivityCards = useMemo(() => {
-    const adminActivities = contentMap["Admin Website Data"]?.activity?.activities || [];
+    const adminActivities = safeContentMap["Admin Website Data"]?.activity?.activities || [];
     if (adminActivities.length) {
       return adminActivities
         .filter((item) => item.active !== false)
@@ -125,7 +149,7 @@ function Home() {
         }));
     }
     return activityCards.map((card) => {
-      const saved = contentMap[`Home Activity - ${card.title}`] || {};
+      const saved = safeContentMap[`Home Activity - ${card.title}`] || {};
       return {
         ...card,
         title: saved.title || card.title,
@@ -133,9 +157,17 @@ function Home() {
         image: mediaUrl(saved.imageUrl) || card.image,
       };
     });
-  }, [contentMap]);
+  }, [safeContentMap]);
 
-  const founderContent = contentMap["Admin Website Data"]?.home?.founder || contentMap["Home - Founder Image"] || {};
+  const founderContent = safeContentMap["Admin Website Data"]?.home?.founder || safeContentMap["Home - Founder Image"] || {};
+
+  if (isLoading) {
+    return (
+      <main className="home-page">
+        <PageLoader message="Loading Shreeji Samipya Trust..." />
+      </main>
+    );
+  }
 
   return (
     <main className="home-page">

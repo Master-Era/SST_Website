@@ -7,6 +7,7 @@ import galleryImg from "../assets/images/images.jfif";
 import trustImg from "../assets/images/Wo we Are.jpg";
 import logoImg from "../assets/images/shreeji-logo.png";
 import { getContentMap, mediaUrl } from "../services/content";
+import PageLoader from "../components/PageLoader";
 
 const albumSource = [
   {
@@ -84,10 +85,14 @@ function Gallery() {
   const [viewerIndex, setViewerIndex] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [adminWebsite, setAdminWebsite] = useState(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
   const searchRef = useRef(null);
 
   useEffect(() => {
-    getContentMap().then((map) => setAdminWebsite(map["Admin Website Data"] || null)).catch(() => setAdminWebsite(null));
+    getContentMap()
+      .then((map) => setAdminWebsite(map["Admin Website Data"] || null))
+      .catch(() => setAdminWebsite(null))
+      .finally(() => setDataLoaded(true));
   }, []);
 
   const liveAlbums = useMemo(() => {
@@ -200,6 +205,14 @@ function Gallery() {
     event.preventDefault();
     setSearchOpen(false);
   };
+
+  if (!dataLoaded) {
+    return (
+      <main className="gallery-page">
+        <PageLoader message="Loading..." />
+      </main>
+    );
+  }
 
   return (
     <main className="gallery-page">

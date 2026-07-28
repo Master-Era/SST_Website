@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./Activity.css";
 import { getContentMap, mediaUrl } from "../services/content";
+import PageLoader from "../components/PageLoader";
 import mandirImg from "../assets/images/Madir,.jpg";
 import eventImg from "../assets/images/Event..jfif";
 import gaushalaImg from "../assets/images/Gaushala.jfif";
@@ -117,9 +118,13 @@ function ActivitySlider({ activity, images }) {
 
 function Activity() {
   const [adminWebsite, setAdminWebsite] = useState(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
-    getContentMap().then((map) => setAdminWebsite(map["Admin Website Data"] || null)).catch(() => setAdminWebsite(null));
+    getContentMap()
+      .then((map) => setAdminWebsite(map["Admin Website Data"] || null))
+      .catch(() => setAdminWebsite(null))
+      .finally(() => setDataLoaded(true));
   }, []);
 
   const parts = [
@@ -132,6 +137,14 @@ function Activity() {
       activities: adminWebsite?.activity?.socialCare?.length ? adminWebsite.activity.socialCare : activityParts[1].activities,
     },
   ];
+
+  if (!dataLoaded) {
+    return (
+      <main className="activity-page">
+        <PageLoader message="Loading..." />
+      </main>
+    );
+  }
 
   return (
     <main className="activity-page">
