@@ -59,10 +59,6 @@ function Donation() {
         <div>
           <span>Donation</span>
           <h1>Offer Seva Through Shreeji Samipya Trust</h1>
-          <p>
-            Donor details submit karo. Shreeji Samipya Trust team tamne jaldi call kari
-            donation process, receipt and seva purpose ni details confirm karse.
-          </p>
         </div>
         <img src={logo} alt="Shreeji Samipya Trust" />
       </section>
@@ -72,7 +68,6 @@ function Donation() {
           <div className="donation-form-head">
             <span>Donation Form</span>
             <h2>Donor Details</h2>
-            <p>Form submit karya pachi website ma thank-you message show thase.</p>
           </div>
 
           <label>
@@ -179,8 +174,9 @@ function Donation() {
             <div className="donation-thankyou">
               <strong>Thank you, {submittedDonation.donorName}.</strong>
               <p>
-                Shreeji Samipya Trust taraf thi aabhar. Tamari donation request receive thai gayi che.
-                Jaldi trust team tamara mobile/WhatsApp number par call kari details confirm karse.
+                Thank you for your donation request to Shreeji Samipya Trust.
+                 We have successfully received your request. 
+                 Our trust team will contact you soon via your mobile number or WhatsApp to confirm the details.
               </p>
             </div>
           )}
@@ -190,13 +186,12 @@ function Donation() {
           <div className="donation-bank-card">
             <span>Donation Process</span>
             <h2>Trust Team Will Guide</h2>
-            <p>Form submit karya pachi donor details trust team sudhi pahochse ane call thi next process explain thase.</p>
-            <ul>
+            {/* <ul>
               <li>Step 1: Donor details submit</li>
               <li>Step 2: Trust team call confirmation</li>
               <li>Step 3: Payment guidance</li>
               <li>Step 4: Receipt / record update</li>
-            </ul>
+            </ul> */}
           </div>
 
           <div className="donation-record-card">
@@ -211,7 +206,7 @@ function Donation() {
                 <p><strong>Date:</strong> {submittedDonation.submittedAt}</p>
               </>
             ) : (
-              <p>Form submit karsho pachi donation details ahi dekhase.</p>
+              <p>Your donation details will appear here after you submit the form.</p>
             )}
           </div>
         </aside>
