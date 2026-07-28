@@ -41,7 +41,7 @@ function Events() {
     <main className="events-page">
       {selectedEvent && (
         <section className="events-intro page-shell">
-          {/* <h1>{selectedEvent.title}</h1> */}
+          <h1>{selectedEvent.title}</h1>
           <div className="event-divider" aria-hidden="true">
             <span />
           </div>
@@ -54,7 +54,7 @@ function Events() {
       {liveEvents.length > 0 && (
         <section className="events-gallery page-shell" aria-label="Event images">
           <div className="gallery-note">
-            {/* <h2>Event Images</h2> */}
+            <h2>Event Images</h2>
           </div>
 
           <div className="event-image-grid">
