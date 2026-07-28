@@ -119,15 +119,17 @@ export default function CmsEditor({
         else change("videoUrl", "");
       }
     } catch (error) {
-      try {
-        const data = await fileToDataUrl(file);
-        change(targetKey, data);
-        if (allowVideoUpload) {
-          change("mediaType", targetKey === "videoUrl" ? "video" : "image");
-        }
-      } catch {
-        window.alert(error?.message || "Media upload failed.");
-      }
+      /*
+        IMPORTANT: previously this silently embedded the raw image as a
+        giant base64 string directly into the database on upload failure.
+        That bloated some rows to several MB, which is what caused the
+        public content API to crash with a MySQL "Out of sort memory"
+        error. Never do that again - show the real error instead so the
+        admin can retry the upload.
+      */
+      window.alert(
+        `Image upload failed: ${error?.message || "Please check your connection and try again."}`
+      );
     } finally {
       setUploading(false);
       event.target.value = "";
