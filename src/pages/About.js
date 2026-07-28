@@ -115,7 +115,6 @@ function About() {
   const liveSections = useMemo(() => {
     const savedSections = adminWebsite?.about?.sections || [];
     return savedSections
-      .filter((item) => String(item.title || "").toLowerCase() !== "founder")
       .filter((item) => item.active !== false)
       .map((item, index) => ({
         id: (item.title || `section-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
@@ -151,8 +150,8 @@ function About() {
   const activeSection = liveSections.find((section) => section.id === activeId);
   const activeGuru = liveGuruParampara.find((guru) => guru.id === activeId);
   const founderSection = useMemo(() => {
-    const saved = adminWebsite?.about?.sections?.find((item) => String(item.title || "").toLowerCase() === "founder");
-    if (!saved) return null;
+    const saved = adminWebsite?.about?.founder;
+    if (!saved || (!saved.image && !saved.content && !(saved.images || []).length)) return null;
     return {
       title: saved.title || "Founder",
       images: [
