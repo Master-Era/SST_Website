@@ -1,0 +1,25 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host:66.116.253.93 
+          username:root
+          key:  -----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+QyNTUxOQAAACAkuwh8cGOxWqhDnAAqZ4fC/LGHAk9L4MwxIrDhnaxdqQAAAJD6XvZL+l72
+SwAAAAtzc2gtZWQyNTUxOQAAACAkuwh8cGOxWqhDnAAqZ4fC/LGHAk9L4MwxIrDhnaxdqQ
+AAAEDVmsTMWvUUx8nGW3baJ2oi6YVGpp8hjAtgNV5DKV2TRiS7CHxwY7FaqEOcACpnh8L8
+sYcCT0vgzDEisOGdrF2pAAAADWdpdGh1Yi1kZXBsb3k=
+-----END OPENSSH PRIVATE KEY-----
+          port: 22 
+          script: |
+            bash /var/www/SST_Website/deploy.sh
