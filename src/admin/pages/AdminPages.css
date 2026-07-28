@@ -37,10 +37,10 @@
         padding-top:8px
     }
     .album-admin-card,.summary-pill,.record-view-field{
-        transform-style:preserve-3d
+        transition:transform .2s ease
     }
     .album-admin-card:hover,.summary-pill:hover,.record-view-field:hover{
-        transform:translateY(-4px) rotateX(1.5deg)
+        transform:translateY(-4px)
     }
     @keyframes adminPanelIn{
         from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
