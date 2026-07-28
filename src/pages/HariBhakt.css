@@ -434,9 +434,9 @@
     width: min(100% - 20px, 1120px);
   }
 
-  .hari-page .page-hero {
+  /* .hari-page .page-hero {
     min-height: 130px;
-  }
+  } */
 
   .hari-form {
     grid-template-columns: 1fr;
