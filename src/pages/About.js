@@ -123,6 +123,7 @@ function About() {
     const savedSections = adminWebsite?.about?.sections || [];
     return savedSections
       .filter((item) => String(item.title || "").toLowerCase() !== "founder")
+      .filter((item) => item.active !== false)
       .map((item, index) => ({
         id: (item.title || `section-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
         label: item.title || `Section ${index + 1}`,

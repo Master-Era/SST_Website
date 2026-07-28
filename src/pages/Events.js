@@ -15,6 +15,7 @@ function Events() {
   const liveEvents = useMemo(() => {
     const saved = adminWebsite?.events?.items || [];
     return saved
+      .filter((item) => item.active !== false)
       .map((item) => ({
         title: item.title || "Event",
         image: mediaUrl(item.image),

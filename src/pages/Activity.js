@@ -74,11 +74,15 @@ function Activity() {
   const parts = [
     {
       ...activityParts[0],
-      activities: adminWebsite?.activity?.activities || [],
+      activities: (adminWebsite?.activity?.activities || []).filter(
+        (item) => item.active !== false
+      ),
     },
     {
       ...activityParts[1],
-      activities: adminWebsite?.activity?.socialCare || [],
+      activities: (adminWebsite?.activity?.socialCare || []).filter(
+        (item) => item.active !== false
+      ),
     },
   ].filter((part) => part.activities.length > 0);
 
