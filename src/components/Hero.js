@@ -101,6 +101,9 @@ const HeroSection = ({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isManuallyPaused, setIsManuallyPaused] =
     useState(false);
+  const [failedSlides, setFailedSlides] = useState(
+    () => new Set()
+  );
 
   const videoRefs = useRef([]);
   const imageTimerRef = useRef(null);
@@ -301,22 +304,24 @@ const HeroSection = ({
     goToNextSlide();
   };
 
-  const handleImageError = (event) => {
-    const imageElement = event.currentTarget;
-
-    imageElement.onerror = null;
-
-    if (
-      imageElement.src.includes(
-        "/images/hero/mandir-1.jpg"
-      )
-    ) {
-      return;
-    }
-
-    imageElement.src =
-      "/images/hero/mandir-1.jpg";
+  const handleImageError = (index) => () => {
+    setFailedSlides((previous) => {
+      if (previous.has(index)) {
+        return previous;
+      }
+      const next = new Set(previous);
+      next.add(index);
+      return next;
+    });
   };
+
+  /*
+    જ્યારે admin data બદલાય (નવા slides આવે) ત્યારે જૂનું failed-state
+    reset થાય, જેથી નવી image ને ફરી try કરવાનો મોકો મળે.
+  */
+  useEffect(() => {
+    setFailedSlides(new Set());
+  }, [activeSlides]);
 
   const togglePlayPause = () => {
     if (totalSlides === 0) {
@@ -372,6 +377,7 @@ const HeroSection = ({
 
           const posterUrl = getPosterUrl(slide);
           const isActive = index === currentSlide;
+          const imageFailed = failedSlides.has(index);
 
           return (
             <div
@@ -381,6 +387,10 @@ const HeroSection = ({
               }
               className={`hero-slide ${
                 isActive ? "active" : ""
+              } ${
+                mediaType === "image" && imageFailed
+                  ? "hero-placeholder"
+                  : ""
               }`}
               aria-hidden={!isActive}
             >
@@ -410,7 +420,7 @@ const HeroSection = ({
                     "Hero video"
                   }
                 />
-              ) : (
+              ) : imageFailed ? null : (
                 <img
                   className="hero-media hero-image"
                   src={mediaUrl}
@@ -428,7 +438,7 @@ const HeroSection = ({
                   }
                   decoding="async"
                   draggable="false"
-                  onError={handleImageError}
+                  onError={handleImageError(index)}
                 />
               )}
 
