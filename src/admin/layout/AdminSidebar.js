@@ -4,13 +4,6 @@ import logo from "../../assets/images/shreeji-logo.png";
 
 const menu = [
   ["/admin/dashboard", "Dashboard", "dashboard", ["Super Admin", "Admin"]],
-  ["/admin/website/home", "Home Edit", "home", ["Super Admin", "Admin", "Editor"]],
-  ["/admin/website/activity", "Activity Edit", "activity", ["Super Admin", "Admin", "Editor"]],
-  ["/admin/website/events", "Events Edit", "events", ["Super Admin", "Admin", "Editor"]],
-  ["/admin/website/news", "News Edit", "news", ["Super Admin", "Admin", "Editor"]],
-  ["/admin/website/gallery", "Gallery Edit", "gallery", ["Super Admin", "Admin", "Editor"]],
-  ["/admin/website/about", "About Edit", "about", ["Super Admin", "Admin", "Editor"]],
-  ["/admin/website/contact", "Contact Edit", "contact", ["Super Admin", "Admin", "Editor"]],
   ["/admin/inquiries", "Inquiry Management", "mail", ["Super Admin", "Admin"]],
   ["/admin/donations", "Donation Management", "donation", ["Super Admin", "Admin"]],
   ["/admin/devotees", "Devotee Records", "users", ["Super Admin", "Admin"]],
@@ -23,13 +16,6 @@ function SidebarIcon({ name }) {
   const common = { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true };
   const paths = {
     dashboard: <><rect x="3" y="3" width="7" height="8" rx="2" /><rect x="14" y="3" width="7" height="5" rx="2" /><rect x="14" y="12" width="7" height="9" rx="2" /><rect x="3" y="15" width="7" height="6" rx="2" /></>,
-    home: <><path d="M3 11.5 12 4l9 7.5" /><path d="M5 10.5V20h14v-9.5" /><path d="M9.5 20v-6h5v6" /></>,
-    activity: <><path d="M12 2v20" /><path d="M2 12h20" /><path d="m5 5 14 14" /><path d="m19 5-14 14" /></>,
-    events: <><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4M16 3v4M4 10h16" /></>,
-    news: <><path d="M4 5h12a4 4 0 0 1 4 4v10H8a4 4 0 0 1-4-4V5Z" /><path d="M8 9h7M8 13h8M8 17h5" /></>,
-    gallery: <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m7 15 3-3 3 3 2-2 3 3" /><circle cx="8.5" cy="9" r="1.5" /></>,
-    about: <><circle cx="12" cy="12" r="9" /><path d="M12 10v6M12 7h.01" /></>,
-    contact: <><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z" /></>,
     mail: <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></>,
     donation: <><path d="M8 6h8" /><path d="M8 10h7a4 4 0 0 1 0 8H8" /><path d="M8 14h8" /><path d="M10 6v12" /></>,
     users: <><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" /><circle cx="9.5" cy="7" r="4" /><path d="M21 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,

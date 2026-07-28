@@ -193,4 +193,18 @@ module.exports = {
     notices: [],
     customSections: [],
   },
+
+  // ============ CONTACT DETAILS (Contact page + Footer, every page) ============
+  contact: {
+    phone: "+91 70433 55925",
+    whatsapp: "+91 70433 55925",
+    email: "info@shreejisamipya.org",
+    address: "Hari Tirth Aashram, Opposite Central University, Kundhela, Vadodara, Gujarat, India",
+    mapLink: "https://maps.app.goo.gl/a5YXeXm7esqtdf729",
+    darshanMorning: "6:00 AM – 12:30 PM",
+    darshanEvening: "4:00 PM – 9:00 PM",
+    facebook: "https://m.facebook.com/search_results/?q=Shreeji+Samipya+Trust",
+    instagram: "https://www.instagram.com/shreeji_samipya_trust/",
+    youtube: "https://www.youtube.com/channel/UCFupl8zGAC817dFp4k3hnRg",
+  },
 };
