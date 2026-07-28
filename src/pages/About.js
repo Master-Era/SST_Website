@@ -4,14 +4,8 @@ import "./About.css";
 import { getContentMap, mediaUrl } from "../services/content";
 import PageLoader from "../components/PageLoader";
 
-const guruParampara = [
-  ["guru-swami-maharaj", "Guru Swami Maharaj", "Guru Swami Maharaj's guidance supports niyam, bhakti, vicharan, seva lifestyle and connection with devotees."],
-].map(([id, name, text]) => ({ id, name, text }));
-
 function getInitialSection() {
   const hash = window.location.hash.replace("#", "");
-  if (hash === "founder") return "founder";
-  if (guruParampara.some((guru) => guru.id === hash)) return hash;
   return hash || "who-we-are";
 }
 
@@ -98,11 +92,10 @@ function GuruSection({ guru }) {
   return (
     <section className="about-reader-section guru-only-section" id={guru.id}>
       <h2>{guru.name}</h2>
-      <p className="lead">{guru.text}</p>
-      <p>
-        Aa area ma lifestyle, vicharan, satsang pravachan, seva margdarshan,
-        prerna prasango and images detail ma add kari shakashe.
-      </p>
+      {guru.images.length > 0 && (
+        <ImageCarousel images={guru.images} title={guru.name} />
+      )}
+      {guru.text && <p className="lead">{guru.text}</p>}
     </section>
   );
 }
@@ -128,10 +121,27 @@ function About() {
         id: (item.title || `section-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
         label: item.title || `Section ${index + 1}`,
         title: item.title || `Section ${index + 1}`,
-        images: [mediaUrl(item.image)].filter(Boolean),
+        images: [
+          mediaUrl(item.image),
+          ...((item.images || []).map((image) => mediaUrl(image))),
+        ].filter(Boolean),
         text: item.content || "",
         details: "",
         points: [],
+      }));
+  }, [adminWebsite]);
+  const liveGuruParampara = useMemo(() => {
+    const saved = adminWebsite?.about?.guruParampara || [];
+    return saved
+      .filter((item) => item.active !== false)
+      .map((item, index) => ({
+        id: (item.title || `guru-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+        name: item.title || `Guru ${index + 1}`,
+        text: item.content || "",
+        images: [
+          mediaUrl(item.image),
+          ...((item.images || []).map((image) => mediaUrl(image))),
+        ].filter(Boolean),
       }));
   }, [adminWebsite]);
   const liveMenuItems = useMemo(() => [
@@ -139,13 +149,16 @@ function About() {
     { id: "founder", label: "Founder", type: "founder" },
   ], [liveSections]);
   const activeSection = liveSections.find((section) => section.id === activeId);
-  const activeGuru = guruParampara.find((guru) => guru.id === activeId);
+  const activeGuru = liveGuruParampara.find((guru) => guru.id === activeId);
   const founderSection = useMemo(() => {
     const saved = adminWebsite?.about?.sections?.find((item) => String(item.title || "").toLowerCase() === "founder");
     if (!saved) return null;
     return {
       title: saved.title || "Founder",
-      images: [mediaUrl(saved.image)].filter(Boolean),
+      images: [
+        mediaUrl(saved.image),
+        ...((saved.images || []).map((image) => mediaUrl(image))),
+      ].filter(Boolean),
       text: saved.content || "",
       details: "",
     };
@@ -164,11 +177,11 @@ function About() {
       setFounderMenuOpen(false);
       return;
     }
-    if (hash === "founder" || guruParampara.some((guru) => guru.id === hash) || liveSections.some((section) => section.id === hash)) {
+    if (hash === "founder" || liveGuruParampara.some((guru) => guru.id === hash) || liveSections.some((section) => section.id === hash)) {
       setActiveId(hash);
       setFounderMenuOpen(false);
     }
-  }, [location.hash, location.pathname, liveSections]);
+  }, [location.hash, location.pathname, liveSections, liveGuruParampara]);
 
   if (!dataLoaded) {
     return (
@@ -207,10 +220,9 @@ function About() {
                   <span>&rsaquo;</span>
                   {item.label}
                 </button>
-                {showFounderChildren && (
+                {showFounderChildren && liveGuruParampara.length > 0 && (
                   <div className="founder-child-menu">
-                    {/* <h3>Trust Founder</h3> */}
-                    {guruParampara.map((guru) => (
+                    {liveGuruParampara.map((guru) => (
                       <button
                         className={activeId === guru.id ? "active child-active" : "child-link"}
                         type="button"

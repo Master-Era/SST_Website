@@ -15,6 +15,8 @@ export default function AboutEdit() {
     return [...current, founder];
   }, [w]);
 
+  const guruParampara = w.about?.guruParampara || [];
+
   const update = (items) => {
     const next = { ...w, about: { ...(w.about || {}), sections: items } };
     setW(next);
@@ -22,11 +24,28 @@ export default function AboutEdit() {
     addLog("About page updated");
   };
 
+  const updateGuru = (items) => {
+    const next = { ...w, about: { ...(w.about || {}), guruParampara: items } };
+    setW(next);
+    save("website", next);
+    addLog("Guru Parampara updated");
+  };
+
   return (
-    <CmsEditor
-      title="About Page - Who We Are, What We Do, Premises, Founder"
-      items={sections}
-      onSave={update}
-    />
+    <>
+      <CmsEditor
+        title="About Page - Who We Are, What We Do, Premises, Founder (Bhagwan Swaminarayan)"
+        items={sections}
+        onSave={update}
+        allowGallery
+      />
+      <br />
+      <CmsEditor
+        title="Founder > Guru Parampara (e.g. Guru Swami Maharaj) - shows as a dropdown under Founder"
+        items={guruParampara}
+        onSave={updateGuru}
+        allowGallery
+      />
+    </>
   );
 }
