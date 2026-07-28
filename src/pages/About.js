@@ -70,8 +70,8 @@ function FounderSection({ section }) {
   if (!section) {
     return (
       <section className="about-reader-section founder-reader" id="founder">
-        <h2>Founder</h2>
-        <p className="lead">Founder details have not been added from the admin panel yet.</p>
+        <h2></h2>
+        <p className="lead"></p>
       </section>
     );
   }
