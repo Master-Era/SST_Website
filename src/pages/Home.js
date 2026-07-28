@@ -3,64 +3,30 @@ import { useEffect, useMemo, useState } from "react";
 import Hero from "../components/Hero";
 import PageLoader from "../components/PageLoader";
 import { getContentMap, mediaUrl } from "../services/content";
-import aboutImg from "../assets/images/Wo we Are.jpg";
-import activityImg from "../assets/images/Gaushala.jfif";
-import eventImg from "../assets/images/Event..jfif";
-import mandirImg from "../assets/images/Madir,.jpg";
-import galleryImg from "../assets/images/images.jfif";
 
 const trustCards = [
   {
     title: "Who We Are",
     href: "/about#who-we-are",
-    image: aboutImg,
-    text: "Shreeji Samipya Trust is a mandir-centered NGO working for satsang, seva and community upliftment.",
   },
   {
     title: "What Are We Doing",
     href: "/about#what-we-do",
-    image: mandirImg,
-    text: "We organize mandir seva, devotee connection, gurukul support and social welfare activities.",
   },
   {
     title: "Activity",
     href: "/activity",
-    image: activityImg,
-    text: "Gaushala, Anna Dan, Vastra Dan, Satsang Sabha and Utsav seva are managed section-wise.",
   },
   {
     title: "Donation",
     href: "/donation",
-    image: galleryImg,
-    text: "Donation support helps Gaushala, Mandir Seva, Gurukul Seva, Utsav and community programs.",
   },
-];
-
-const events = [
-  ["Dharmik Utsav", eventImg, "Festival seva, mandir decoration and bhakti gatherings."],
-  ["Social Seva", mandirImg, "Community support programs planned with volunteers."],
-  ["Satsang Sabha", galleryImg, "Weekly satsang, youth guidance and devotee connection."],
 ];
 
 const activityCards = [
-  {
-    title: "Blood Donation",
-    href: "/activity",
-    image: eventImg,
-    text: "Blood donation camp connects volunteers and donors for lifesaving seva. The activity is organized with discipline and community support.",
-  },
-  {
-    title: "Health Care",
-    href: "/activity",
-    image: mandirImg,
-    text: "Health care provides basic checkups, awareness and guidance for families. It brings practical care close to devotees and local people.",
-  },
-  {
-    title: "Educate Child",
-    href: "/activity",
-    image: galleryImg,
-    text: "Child education support helps with learning materials, guidance and sanskar. The goal is to serve children with dignity and care.",
-  },
+  { title: "Blood Donation", href: "/activity" },
+  { title: "Health Care", href: "/activity" },
+  { title: "Educate Child", href: "/activity" },
 ];
 
 function Home() {
@@ -175,6 +141,19 @@ function Home() {
   const founderContent = safeContentMap["Admin Website Data"]?.home?.founder || safeContentMap["Home - Founder Image"] || {};
   const founderImage = mediaUrl(founderContent.image || founderContent.imageUrl);
 
+  const homeEvents = useMemo(() => {
+    const adminEvents = safeContentMap["Admin Website Data"]?.events?.items || [];
+    return adminEvents
+      .filter((item) => item.active !== false)
+      .map((item, index) => ({
+        title: item.title || `Event ${index + 1}`,
+        image: mediaUrl(item.image),
+        text: item.content || "",
+      }))
+      .filter((item) => item.image || item.text)
+      .slice(0, 3);
+  }, [safeContentMap]);
+
   if (isLoading) {
     return (
       <main className="home-page">
@@ -239,26 +218,28 @@ function Home() {
         </section>
       )}
 
-      <section className="home-events-section">
-        <div className="page-shell">
-          <div className="section-heading light">
-            <h2>Events</h2>
-            <p>Mandir events, social care gatherings and satsang memories in a clean visual flow.</p>
+      {homeEvents.length > 0 && (
+        <section className="home-events-section">
+          <div className="page-shell">
+            <div className="section-heading light">
+              <h2>Events</h2>
+              <p>Mandir events, social care gatherings and satsang memories in a clean visual flow.</p>
+            </div>
+            <div className="round-event-grid">
+              {homeEvents.map((event) => (
+                <article className="round-event-card" key={event.title}>
+                  <img src={event.image} alt={event.title} />
+                  <div>
+                    <h3>{event.title}</h3>
+                    <p>{event.text}</p>
+                    <a href="/events">View More</a>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
-          <div className="round-event-grid">
-            {events.map(([title, image, text]) => (
-              <article className="round-event-card" key={title}>
-                <img src={image} alt={title} />
-                <div>
-                  <h3>{title}</h3>
-                  <p>{text}</p>
-                  <a href="/events">View More</a>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {founderImage && (
         <section className="founders-section">
