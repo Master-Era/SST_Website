@@ -1,83 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./Gallery.css";
-import mandirImg from "../assets/images/Madir,.jpg";
-import eventImg from "../assets/images/Event..jfif";
-import gaushalaImg from "../assets/images/Gaushala.jfif";
-import galleryImg from "../assets/images/images.jfif";
-import trustImg from "../assets/images/Wo we Are.jpg";
-import logoImg from "../assets/images/shreeji-logo.png";
 import { getContentMap, mediaUrl } from "../services/content";
 import PageLoader from "../components/PageLoader";
-
-const albumSource = [
-  {
-    id: "premises",
-    title: "Premises",
-    description: "Mandir campus, Hari Tirth Aashram and place-wise image folders.",
-    cover: mandirImg,
-    images: [mandirImg, galleryImg, trustImg, eventImg, gaushalaImg],
-  },
-  {
-    id: "events",
-    title: "Events",
-    description: "Utsav, sabha, national day and mandir event photo collection.",
-    cover: eventImg,
-    images: [eventImg, mandirImg, galleryImg, trustImg, gaushalaImg],
-  },
-  {
-    id: "activity",
-    title: "Activity",
-    description: "Seva, health care, education, food distribution and social care images.",
-    cover: galleryImg,
-    images: [galleryImg, eventImg, mandirImg, gaushalaImg, trustImg],
-  },
-  {
-    id: "vicharan",
-    title: "Vicharan",
-    description: "Guruhari vicharan, satsang visits and devotee connection memories.",
-    cover: trustImg,
-    images: [trustImg, logoImg, mandirImg, eventImg, galleryImg],
-  },
-  {
-    id: "gaushala",
-    title: "Gaushala",
-    description: "Cow care, fodder seva, daily seva and gaushala activity images.",
-    cover: gaushalaImg,
-    images: [gaushalaImg, mandirImg, eventImg, galleryImg, trustImg],
-  },
-  {
-    id: "bhagawan-swaminarayan",
-    title: "Bhagawan Swaminarayan",
-    description: "Darshan, murti, mandir decoration and bhakti image collection.",
-    cover: logoImg,
-    images: [logoImg, mandirImg, trustImg, eventImg, galleryImg],
-  },
-  {
-    id: "guruhari-guruswami",
-    title: "Guru Hari Guru Swami Maharaj",
-    description: "Guruhari darshan, blessings, sabha and seva guidance images.",
-    cover: trustImg,
-    images: [trustImg, logoImg, mandirImg, galleryImg, eventImg],
-  },
-];
-
-const albums = albumSource.map((album) => ({
-  ...album,
-  count: 20,
-  items: Array.from({ length: 20 }, (_, index) => {
-    const image = album.images[index % album.images.length];
-    const month = String((index % 12) + 1).padStart(2, "0");
-    const day = String((index % 27) + 1).padStart(2, "0");
-
-    return {
-      id: `${album.id}-${index + 1}`,
-      title: `${album.title} Image ${index + 1}`,
-      eventName: index % 2 === 0 ? "Utsav" : "Seva",
-      date: `2026-${month}-${day}`,
-      image,
-    };
-  }),
-}));
 
 function Gallery() {
   const [filters, setFilters] = useState({ name: "", month: "", year: "" });
@@ -97,7 +21,7 @@ function Gallery() {
 
   const liveAlbums = useMemo(() => {
     const savedAlbums = adminWebsite?.gallery?.albums || [];
-    if (!savedAlbums.length) return albums;
+    if (!savedAlbums.length) return [];
     return savedAlbums.filter((album) => album.active !== false).map((album, albumIndex) => {
       const rawImages = album.images?.length ? album.images : [album.cover].filter(Boolean);
       const items = rawImages.map((img, index) => {
@@ -116,7 +40,7 @@ function Gallery() {
         id: String(album.id || albumIndex),
         title: album.title || "Album",
         description: album.description || "",
-        cover: mediaUrl(album.cover || items[0]?.image || mandirImg),
+        cover: mediaUrl(album.cover) || items[0]?.image || "",
         count: items.length,
         items,
       };

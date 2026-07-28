@@ -3,55 +3,8 @@ import { useLocation } from "react-router-dom";
 import "./About.css";
 import { getContentMap, mediaUrl } from "../services/content";
 import PageLoader from "../components/PageLoader";
-import trustImg from "../assets/images/Wo we Are.jpg";
-import mandirImg from "../assets/images/Madir,.jpg";
-import activityImg from "../assets/images/Event..jfif";
-import gaushalaImg from "../assets/images/Gaushala.jfif";
-import galleryImg from "../assets/images/images.jfif";
-import logoImg from "../assets/images/shreeji-logo.png";
-
-const aboutSections = [
-  {
-    id: "who-we-are",
-    label: "Who We Are",
-    title: "Who We Are",
-    images: [trustImg, logoImg, mandirImg],
-    text:
-      "Shreeji Samipya Sanstha is a mandir-centered seva and satsang organization. The trust connects devotees with bhakti, seva, sanskar and community support through disciplined planning.",
-    details:
-      "The sanstha carries the spirit of samipya: staying close to Bhagwan, Guru, mandir and society. Every activity is planned so devotees, families, youth and volunteers can join with confidence.",
-    points: ["Mandir centered seva", "Devotee connection", "Transparent trust work", "Sanskar and satsang"],
-  },
-  {
-    id: "what-we-do",
-    label: "What We Do",
-    title: "What We Do",
-    images: [mandirImg, galleryImg, activityImg],
-    text:
-      "We organize mandir seva, satsang sabha, utsav seva, gaushala support, child education, health care and social help programs.",
-    details:
-      "The work is designed so spiritual growth and practical social service both remain together. Event planning, volunteer coordination, beneficiary support and gallery records can be managed clearly.",
-    points: ["Mandir seva", "Utsav and sabha", "Education and health", "Volunteer coordination"],
-  },
-  {
-    id: "premises",
-    label: "Premises",
-    title: "Premises",
-    images: [mandirImg, gaushalaImg, trustImg],
-    text:
-      "Premises section introduces the mandir campus, Hari Tirth Aashram, gaushala, sabha space and seva areas.",
-    details:
-      "This section can hold future details such as address, mandir timings, facilities, darshan areas, parking guidance and separate gallery albums for every place.",
-    points: ["Hari Tirth Aashram", "Mandir campus", "Gaushala", "Sabha and seva spaces"],
-  },
-];
 
 const guruParampara = [
-  // ["gunatitanand-swami", "Gunatitanand Swami", "Aksharbrahma Gunatitanand Swami's life shows firm upasana, simplicity, seva and constant satsang guidance."],
-  // ["bhagatji-maharaj", "Bhagatji Maharaj", "Bhagatji Maharaj inspired devotees through dedication, guru-bhakti, humility and living understanding of Akshar-Purushottam."],
-  // ["shastriji-maharaj", "Shastriji Maharaj", "Shastriji Maharaj established mandirs with courage, conviction and pure devotion while spreading spiritual clarity."],
-  // ["yogiji-maharaj", "Yogiji Maharaj", "Yogiji Maharaj's life radiated joy, youth inspiration, seva, prayer and universal compassion."],
-  // ["hari-prasad-swami", "Hari Prasad Swami Maharaj", "Hari Prasad Swami Maharaj guided seekers toward inner discipline, satsang, seva and practical spiritual living."],
   ["guru-swami-maharaj", "Guru Swami Maharaj", "Guru Swami Maharaj's guidance supports niyam, bhakti, vicharan, seva lifestyle and connection with devotees."],
 ].map(([id, name, text]) => ({ id, name, text }));
 
@@ -59,8 +12,7 @@ function getInitialSection() {
   const hash = window.location.hash.replace("#", "");
   if (hash === "founder") return "founder";
   if (guruParampara.some((guru) => guru.id === hash)) return hash;
-  if (aboutSections.some((section) => section.id === hash)) return hash;
-  return "who-we-are";
+  return hash || "who-we-are";
 }
 
 function ImageCarousel({ images, title }) {
@@ -104,32 +56,40 @@ function AboutSection({ section }) {
   return (
     <section className="about-reader-section" id={section.id}>
       <h2>{section.title}</h2>
-      <ImageCarousel images={section.images} title={section.title} />
-      <p className="lead">{section.text}</p>
-      <p>{section.details}</p>
-      <div className="about-tags">
-        {section.points.map((point) => (
-          <strong key={point}>{point}</strong>
-        ))}
-      </div>
+      {section.images.length > 0 && (
+        <ImageCarousel images={section.images} title={section.title} />
+      )}
+      {section.text && <p className="lead">{section.text}</p>}
+      {section.details && <p>{section.details}</p>}
+      {section.points.length > 0 && (
+        <div className="about-tags">
+          {section.points.map((point) => (
+            <strong key={point}>{point}</strong>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
 function FounderSection({ section }) {
+  if (!section) {
+    return (
+      <section className="about-reader-section founder-reader" id="founder">
+        <h2>Founder</h2>
+        <p className="lead">Founder details have not been added from the admin panel yet.</p>
+      </section>
+    );
+  }
+
   return (
     <section className="about-reader-section founder-reader" id="founder">
-      <h2>{section?.title || "Founder"}</h2>
-      <ImageCarousel images={section?.images || [logoImg, trustImg, mandirImg]} title={section?.title || "Founder"} />
-      <p className="lead">
-        {section?.text || `Bhagawan Swaminarayan ni upasana satsang nu kendr che. Temna siddhant
-        thi mandir, niyam, seva, sadachar, sant-samagam ane parivarik sanskar
-        ni prerna male che.`}
-      </p>
-      <p>
-        {section?.details || `Founder section ma life, work, vicharan, teachings, seva lifestyle and
-        guru parampara ni detailed information add kari shakashe.`}
-      </p>
+      <h2>{section.title || "Founder"}</h2>
+      {section.images.length > 0 && (
+        <ImageCarousel images={section.images} title={section.title || "Founder"} />
+      )}
+      {section.text && <p className="lead">{section.text}</p>}
+      {section.details && section.details !== section.text && <p>{section.details}</p>}
     </section>
   );
 }
@@ -138,7 +98,6 @@ function GuruSection({ guru }) {
   return (
     <section className="about-reader-section guru-only-section" id={guru.id}>
       <h2>{guru.name}</h2>
-      <ImageCarousel images={[trustImg, logoImg]} title={guru.name} />
       <p className="lead">{guru.text}</p>
       <p>
         Aa area ma lifestyle, vicharan, satsang pravachan, seva margdarshan,
@@ -160,17 +119,20 @@ function About() {
       .catch(() => setAdminWebsite(null))
       .finally(() => setDataLoaded(true));
   }, []);
-  const liveSections = useMemo(() => adminWebsite?.about?.sections?.length
-    ? adminWebsite.about.sections.filter((item) => String(item.title || "").toLowerCase() !== "founder").map((item, index) => ({
+  const liveSections = useMemo(() => {
+    const savedSections = adminWebsite?.about?.sections || [];
+    return savedSections
+      .filter((item) => String(item.title || "").toLowerCase() !== "founder")
+      .map((item, index) => ({
         id: (item.title || `section-${index + 1}`).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
         label: item.title || `Section ${index + 1}`,
         title: item.title || `Section ${index + 1}`,
-        images: [mediaUrl(item.image), trustImg, logoImg].filter(Boolean),
+        images: [mediaUrl(item.image)].filter(Boolean),
         text: item.content || "",
-        details: item.content || "",
+        details: "",
         points: [],
-      }))
-    : aboutSections, [adminWebsite]);
+      }));
+  }, [adminWebsite]);
   const liveMenuItems = useMemo(() => [
     ...liveSections.map((section) => ({ id: section.id, label: section.label, type: "section" })),
     { id: "founder", label: "Founder", type: "founder" },
@@ -182,9 +144,9 @@ function About() {
     if (!saved) return null;
     return {
       title: saved.title || "Founder",
-      images: [mediaUrl(saved.image), logoImg, trustImg, mandirImg].filter(Boolean),
+      images: [mediaUrl(saved.image)].filter(Boolean),
       text: saved.content || "",
-      details: saved.content || "",
+      details: "",
     };
   }, [adminWebsite]);
   const showFounderChildren = activeId === "founder" || founderMenuOpen;

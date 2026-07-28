@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import "./News.css";
-import { newsCategories, newsItems } from "../data/newsData";
 import { getContentMap } from "../services/content";
 import PageLoader from "../components/PageLoader";
 
@@ -17,8 +16,7 @@ function News() {
   }, []);
 
   const liveNews = useMemo(() => {
-    const news = adminWebsite?.news;
-    if (!news) return null;
+    const news = adminWebsite?.news || {};
     return [
       ...(news.latest || []).map((item) => ({ ...item, category: "Latest News" })),
       ...(news.announcements || []).map((item) => ({ ...item, category: "Upcoming Announcements" })),
@@ -27,8 +25,8 @@ function News() {
     ].filter((item) => item.active !== false);
   }, [adminWebsite]);
 
-  const categories = liveNews ? [...new Set(liveNews.map((item) => item.category))] : newsCategories;
-  const source = liveNews || newsItems;
+  const categories = [...new Set(liveNews.map((item) => item.category))];
+  const source = liveNews;
 
   if (!dataLoaded) {
     return (

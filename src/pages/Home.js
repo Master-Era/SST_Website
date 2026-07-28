@@ -8,7 +8,6 @@ import activityImg from "../assets/images/Gaushala.jfif";
 import eventImg from "../assets/images/Event..jfif";
 import mandirImg from "../assets/images/Madir,.jpg";
 import galleryImg from "../assets/images/images.jfif";
-import logoImg from "../assets/images/shreeji-logo.png";
 
 const trustCards = [
   {
@@ -122,18 +121,27 @@ function Home() {
           title: item.title || `Section ${index + 1}`,
           href: trustCards[index]?.href || "/about",
           text: item.content || "",
-          image: mediaUrl(item.image) || trustCards[index % trustCards.length]?.image || aboutImg,
-        }));
+          image: mediaUrl(item.image),
+        }))
+        .filter((card) => card.image || card.text);
     }
-    return trustCards.map((card) => {
-      const saved = safeContentMap[`Home - ${card.title}`] || {};
-      return {
-        ...card,
-        title: saved.title || card.title,
-        text: saved.description || card.text,
-        image: mediaUrl(saved.imageUrl) || card.image,
-      };
-    });
+
+    // Legacy per-card admin keys ("Home - Who We Are", etc). A card only
+    // shows up here if the admin panel has actually saved something for
+    // it - the hardcoded title/image/text above is used only to know
+    // which admin key to look up, never as a value shown on the site.
+    return trustCards
+      .map((card) => {
+        const saved = safeContentMap[`Home - ${card.title}`];
+        if (!saved) return null;
+        return {
+          title: saved.title || card.title,
+          href: card.href,
+          text: saved.description || "",
+          image: mediaUrl(saved.imageUrl),
+        };
+      })
+      .filter(Boolean);
   }, [safeContentMap]);
 
   const dynamicActivityCards = useMemo(() => {
@@ -145,21 +153,27 @@ function Home() {
           title: item.title || `Activity ${index + 1}`,
           href: "/activity",
           text: item.content || "",
-          image: mediaUrl(item.image) || activityCards[index % activityCards.length]?.image || eventImg,
-        }));
+          image: mediaUrl(item.image),
+        }))
+        .filter((card) => card.image || card.text);
     }
-    return activityCards.map((card) => {
-      const saved = safeContentMap[`Home Activity - ${card.title}`] || {};
-      return {
-        ...card,
-        title: saved.title || card.title,
-        text: saved.description || card.text,
-        image: mediaUrl(saved.imageUrl) || card.image,
-      };
-    });
+
+    return activityCards
+      .map((card) => {
+        const saved = safeContentMap[`Home Activity - ${card.title}`];
+        if (!saved) return null;
+        return {
+          title: saved.title || card.title,
+          href: card.href,
+          text: saved.description || "",
+          image: mediaUrl(saved.imageUrl),
+        };
+      })
+      .filter(Boolean);
   }, [safeContentMap]);
 
   const founderContent = safeContentMap["Admin Website Data"]?.home?.founder || safeContentMap["Home - Founder Image"] || {};
+  const founderImage = mediaUrl(founderContent.image || founderContent.imageUrl);
 
   if (isLoading) {
     return (
@@ -173,53 +187,57 @@ function Home() {
     <main className="home-page">
       <Hero slides={heroSlides} />
 
-      <section className="home-trust-section">
-        <div className="page-shell">
-          <div className="section-heading">
-            <h1>Shreeji Samipya Trust</h1>
-            <p>Clear information blocks for who we are, what we do, activities and donation support.</p>
-          </div>
+      {dynamicTrustCards.length > 0 && (
+        <section className="home-trust-section">
+          <div className="page-shell">
+            <div className="section-heading">
+              <h1>Shreeji Samipya Trust</h1>
+              <p>Clear information blocks for who we are, what we do, activities and donation support.</p>
+            </div>
 
-          <div className="trust-card-grid">
-            {dynamicTrustCards.map((card) => (
-              <article className="trust-card" key={card.title}>
-                <div className="trust-card-media">
-                  <img src={card.image} alt={card.title} />
-                </div>
-                <div>
-                  <h2>{card.title}</h2>
-                  <p>{card.text}</p>
-                  <a href={card.href}>View More</a>
-                </div>
-              </article>
-            ))}
+            <div className="trust-card-grid">
+              {dynamicTrustCards.map((card) => (
+                <article className="trust-card" key={card.title}>
+                  <div className="trust-card-media">
+                    <img src={card.image} alt={card.title} />
+                  </div>
+                  <div>
+                    <h2>{card.title}</h2>
+                    <p>{card.text}</p>
+                    <a href={card.href}>View More</a>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <section className="home-activity-section">
-        <div className="page-shell">
-          <div className="section-heading">
-            <h2>Activity</h2>
-            <p>Focused seva cards with direct connection to the matching activity details.</p>
-          </div>
+      {dynamicActivityCards.length > 0 && (
+        <section className="home-activity-section">
+          <div className="page-shell">
+            <div className="section-heading">
+              <h2>Activity</h2>
+              <p>Focused seva cards with direct connection to the matching activity details.</p>
+            </div>
 
-          <div className="home-activity-grid">
-            {dynamicActivityCards.map((card) => (
-              <article className="home-activity-card" key={card.title}>
-                <div className="activity-card-image">
-                  <img src={card.image} alt={card.title} />
-                </div>
-                <div>
-                  <h3>{card.title}</h3>
-                  <p>{card.text}</p>
-                  <a href={card.href}>View More</a>
-                </div>
-              </article>
-            ))}
+            <div className="home-activity-grid">
+              {dynamicActivityCards.map((card) => (
+                <article className="home-activity-card" key={card.title}>
+                  <div className="activity-card-image">
+                    <img src={card.image} alt={card.title} />
+                  </div>
+                  <div>
+                    <h3>{card.title}</h3>
+                    <p>{card.text}</p>
+                    <a href={card.href}>View More</a>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="home-events-section">
         <div className="page-shell">
@@ -242,19 +260,21 @@ function Home() {
         </div>
       </section>
 
-      <section className="founders-section">
-        <div className="page-shell">
-          <div className="section-heading">
-            <h2>Founders</h2>
-            <p>Open the founder introduction and Guru Parampara details from the About page.</p>
-          </div>
-          <a className="founder-single-card" href="/about#founder">
-            <img src={mediaUrl(founderContent.image || founderContent.imageUrl) || logoImg} />
+      {founderImage && (
+        <section className="founders-section">
+          <div className="page-shell">
+            <div className="section-heading">
+              <h2>Founders</h2>
+              <p>Open the founder introduction and Guru Parampara details from the About page.</p>
+            </div>
+            <a className="founder-single-card" href="/about#founder">
+              <img src={founderImage} alt={founderContent.title || "Guru Parampara"} />
 
-            <strong>{founderContent.title || "Guru Parampara"}</strong>
-          </a>
-        </div>
-      </section>
+              <strong>{founderContent.title || "Guru Parampara"}</strong>
+            </a>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
