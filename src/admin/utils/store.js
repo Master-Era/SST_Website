@@ -13,7 +13,7 @@ const keys = {
   logs: "mandir_logs",
   notifications: "mandir_notifications",
 };
-const WEBSITE_SCHEMA_VERSION = 5;
+const WEBSITE_SCHEMA_VERSION = 6;
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
 export const load = (key, fallback) => {
@@ -195,6 +195,12 @@ function normalizeWebsiteData(value) {
       images: album.images?.length ? album.images : (fallback.images || []),
     };
   });
+
+  // Shallow merge: keep every admin-edited contact field, only fill in
+  // fields that are genuinely missing (e.g. on first migration to this
+  // schema version) with the real business-info defaults.
+  data.contact = { ...defaults.contact, ...(data.contact || {}) };
+
   return data;
 }
 

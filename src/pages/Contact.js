@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./Contact.css";
 import { apiPost } from "../services/api";
-
-const mapLink = "https://maps.app.goo.gl/a5YXeXm7esqtdf729";
+import { getContentMap } from "../services/content";
+import PageLoader from "../components/PageLoader";
 
 const initialForm = {
   full_name: "",
@@ -12,16 +12,32 @@ const initialForm = {
   message: "",
 };
 
-const contactDetails = [
-  ["Phone", "+91 70433 55925"],
-  ["WhatsApp", "+91 70433 55925"],
-  ["Email", "info@shreejisamipya.org"],
-  ["Address", "Shreeji Samipya Trust, Hari Tirth Ashram, Opposite Central University of Gujarat, Kundhela, Taluka: Dabhoi, District: Vadodara, Pin Code:391107"],
-];
-
 function Contact() {
   const [form, setForm] = useState(initialForm);
   const [status, setStatus] = useState("");
+  const [contentMap, setContentMap] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    getContentMap()
+      .then((data) => { if (isMounted) setContentMap(data || {}); })
+      .catch(() => { if (isMounted) setContentMap({}); });
+    return () => { isMounted = false; };
+  }, []);
+
+  const isLoading = contentMap === null;
+  const contact = (contentMap || {})["Admin Website Data"]?.contact || {};
+  const mapLink = contact.mapLink || "";
+
+  const contactDetails = useMemo(() => {
+    const rows = [
+      ["Phone", contact.phone],
+      ["WhatsApp", contact.whatsapp],
+      ["Email", contact.email],
+      ["Address", contact.address],
+    ];
+    return rows.filter(([, value]) => value);
+  }, [contact.phone, contact.whatsapp, contact.email, contact.address]);
 
   const update = (event) => {
     setForm({ ...form, [event.target.name]: event.target.value });
@@ -39,18 +55,18 @@ function Contact() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <main className="contact-page">
+        <PageLoader message="Loading..." />
+      </main>
+    );
+  }
+
   return (
     <main className="contact-page">
       <section className="contact-hero page-shell">
-        <div className="contact-hero-copy">
-          {/* <span>Contact</span>
-          <h1>Connect with Shreeji Samipya</h1> */}
-          {/* <p>
-            Reach the trust office for mandir seva, devotee support, activities,
-            events, donation inquiry or general communication.
-          </p> */}
-          {/* <a href={mapLink} target="_blank" rel="noreferrer">Open Google Map</a> */}
-        </div>
+        <div className="contact-hero-copy" />
       </section>
 
       <section className="contact-layout page-shell">
@@ -58,20 +74,35 @@ function Contact() {
           <h2>Contact Details</h2>
           <p>Use the details below or submit the form. Our team can follow up for all trust and seva related inquiries.</p>
 
-          <div className="contact-list">
-            {contactDetails.map(([label, value]) => (
-              <a href={label === "Email" ? `mailto:${value}` : label === "Phone" || label === "WhatsApp" ? `tel:${value.replaceAll(" ", "")}` : mapLink} key={label} target={label === "Address" ? "_blank" : undefined} rel="noreferrer">
-                <strong>{label}</strong>
-                <span>{value}</span>
-              </a>
-            ))}
-          </div>
+          {contactDetails.length > 0 && (
+            <div className="contact-list">
+              {contactDetails.map(([label, value]) => (
+                <a
+                  href={
+                    label === "Email"
+                      ? `mailto:${value}`
+                      : label === "Phone" || label === "WhatsApp"
+                        ? `tel:${value.replaceAll(" ", "")}`
+                        : mapLink || "#"
+                  }
+                  key={label}
+                  target={label === "Address" ? "_blank" : undefined}
+                  rel="noreferrer"
+                >
+                  <strong>{label}</strong>
+                  <span>{value}</span>
+                </a>
+              ))}
+            </div>
+          )}
 
-          <a className="map-box" href={mapLink} target="_blank" rel="noreferrer">
-            <div className="map-pin" aria-hidden="true" />
-            <span>Google Map Location</span>
-            <strong>Open Map</strong>
-          </a>
+          {mapLink && (
+            <a className="map-box" href={mapLink} target="_blank" rel="noreferrer">
+              <div className="map-pin" aria-hidden="true" />
+              <span>Google Map Location</span>
+              <strong>Open Map</strong>
+            </a>
+          )}
         </aside>
 
         <form className="contact-form" onSubmit={submit}>

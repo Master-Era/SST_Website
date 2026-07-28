@@ -10,6 +10,7 @@ import EventsEdit from "./pages/EventsEdit";
 import NewsEdit from "./pages/NewsEdit";
 import GalleryEdit from "./pages/GalleryEdit";
 import AboutEdit from "./pages/AboutEdit";
+import ContactEdit from "./pages/ContactEdit";
 import Inquiries from "./pages/Inquiries";
 import Donations from "./pages/Donations";
 import Devotees from "./pages/Devotees";
@@ -49,6 +50,7 @@ export default function AdminPanel() {
         <Route path="website/news" element={<NewsEdit />} />
         <Route path="website/gallery" element={<GalleryEdit />} />
         <Route path="website/about" element={<AboutEdit />} />
+        <Route path="website/contact" element={<ContactEdit />} />
         <Route path="inquiries" element={<Inquiries />} />
         <Route path="donations" element={<Donations />} />
         <Route path="devotees" element={<Devotees />} />

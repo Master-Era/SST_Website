@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   FaFacebookF,
   FaInstagram,
@@ -13,8 +14,21 @@ import {
 } from "react-icons/fa";
 
 import "./Footer.css";
+import { getContentMap } from "../services/content";
 
 function Footer() {
+  const [contact, setContact] = useState({});
+
+  useEffect(() => {
+    let isMounted = true;
+    getContentMap()
+      .then((data) => {
+        if (isMounted) setContact(data?.["Admin Website Data"]?.contact || {});
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
   return (
     <footer className="site-footer">
       <div className="footer-background"></div>
@@ -46,45 +60,53 @@ function Footer() {
             </p>
 
             <div className="footer-social">
-              <a
-                href="https://m.facebook.com/search_results/?q=Shreeji+Samipya+Trust"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Facebook"
-                title="Facebook"
-              >
-                <FaFacebookF />
-              </a>
+              {contact.facebook && (
+                <a
+                  href={contact.facebook}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Facebook"
+                  title="Facebook"
+                >
+                  <FaFacebookF />
+                </a>
+              )}
 
-              <a
-                href="https://www.instagram.com/shreeji_samipya_trust/"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Instagram"
-                title="Instagram"
-              >
-                <FaInstagram />
-              </a>
+              {contact.instagram && (
+                <a
+                  href={contact.instagram}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Instagram"
+                  title="Instagram"
+                >
+                  <FaInstagram />
+                </a>
+              )}
 
-              <a
-                href="https://www.youtube.com/channel/UCFupl8zGAC817dFp4k3hnRg"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="YouTube"
-                title="YouTube"
-              >
-                <FaYoutube />
-              </a>
+              {contact.youtube && (
+                <a
+                  href={contact.youtube}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="YouTube"
+                  title="YouTube"
+                >
+                  <FaYoutube />
+                </a>
+              )}
 
-              <a
-                href="https://wa.me/917043355925"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="WhatsApp"
-                title="WhatsApp"
-              >
-                <FaWhatsapp />
-              </a>
+              {contact.whatsapp && (
+                <a
+                  href={`https://wa.me/${contact.whatsapp.replace(/[^\d]/g, "")}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="WhatsApp"
+                  title="WhatsApp"
+                >
+                  <FaWhatsapp />
+                </a>
+              )}
             </div>
           </div>
 
@@ -197,63 +219,65 @@ function Footer() {
             <div className="footer-title-line"></div>
 
             <div className="footer-contact-list">
-              <div className="footer-contact-item">
-                <div className="footer-contact-icon">
-                  <FaMapMarkerAlt />
-                </div>
+              {contact.address && (
+                <div className="footer-contact-item">
+                  <div className="footer-contact-icon">
+                    <FaMapMarkerAlt />
+                  </div>
 
-                <div>
-                  <strong>Our Address</strong>
-                  <p>
-                    Hari Tirth AaShram,
-                    Oppsite, Central University,
-                    Kundhela, Vadodara,
-                    <br />
-                    Vadodara, Gujarat, India
-                  </p>
+                  <div>
+                    <strong>Our Address</strong>
+                    <p>{contact.address}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="footer-contact-item">
-                <div className="footer-contact-icon">
-                  <FaPhoneAlt />
-                </div>
+              {contact.phone && (
+                <div className="footer-contact-item">
+                  <div className="footer-contact-icon">
+                    <FaPhoneAlt />
+                  </div>
 
-                <div>
-                  <strong>Call Us</strong>
-                  <a href="tel:+919876543210">
-                    +91 70433 55925
-                  </a>
+                  <div>
+                    <strong>Call Us</strong>
+                    <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}>
+                      {contact.phone}
+                    </a>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="footer-contact-item">
-                <div className="footer-contact-icon">
-                  <FaEnvelope />
-                </div>
+              {contact.email && (
+                <div className="footer-contact-item">
+                  <div className="footer-contact-icon">
+                    <FaEnvelope />
+                  </div>
 
-                <div>
-                  <strong>Email Us</strong>
-                  <a href="mailto:info@shreejisamipya.org">
-                    info@shreejisamipya.org
-                  </a>
+                  <div>
+                    <strong>Email Us</strong>
+                    <a href={`mailto:${contact.email}`}>
+                      {contact.email}
+                    </a>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="footer-contact-item">
-                <div className="footer-contact-icon">
-                  <FaClock />
-                </div>
+              {(contact.darshanMorning || contact.darshanEvening) && (
+                <div className="footer-contact-item">
+                  <div className="footer-contact-icon">
+                    <FaClock />
+                  </div>
 
-                <div>
-                  <strong>Darshan Time</strong>
-                  <p>
-                    Morning: 6:00 AM – 12:30 PM
-                    <br />
-                    Evening: 4:00 PM – 9:00 PM
-                  </p>
+                  <div>
+                    <strong>Darshan Time</strong>
+                    <p>
+                      {contact.darshanMorning && <>Morning: {contact.darshanMorning}</>}
+                      {contact.darshanMorning && contact.darshanEvening && <br />}
+                      {contact.darshanEvening && <>Evening: {contact.darshanEvening}</>}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
