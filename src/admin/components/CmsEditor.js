@@ -24,6 +24,7 @@ export default function CmsEditor({
   allowVideoUpload = false,
   hideImage = false,
   inlineEditor = false,
+  allowGallery = false,
 }) {
   const [rows, setRows] = useState(() => normalizeOrder(items || []));
   const [edit, setEdit] = useState(null);
@@ -38,6 +39,7 @@ export default function CmsEditor({
     title: "",
     content: "",
     image: "",
+    images: [],
     videoUrl: "",
     mediaType: "image",
     active: true,
@@ -136,6 +138,57 @@ export default function CmsEditor({
     }
   };
 
+  const addGalleryImages = async (event) => {
+    const files = [...(event.target.files || [])];
+    if (!files.length) return;
+
+    const invalidFile = files.find((file) => !validateAdminImage(file).ok);
+    if (invalidFile) {
+      window.alert(validateAdminImage(invalidFile).message);
+      event.target.value = "";
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const uploaded = [];
+      for (let index = 0; index < files.length; index += 1) {
+        const file = files[index];
+        const result = await adminApi.upload(file);
+        uploaded.push(result.url || result.image_url || result.path);
+      }
+      setEdit((current) => ({
+        ...current,
+        images: [...(current.images || []), ...uploaded],
+      }));
+    } catch (error) {
+      window.alert(
+        `One or more images could not be uploaded: ${error?.message || "please try again."}`
+      );
+    } finally {
+      setUploading(false);
+      event.target.value = "";
+    }
+  };
+
+  const removeGalleryImage = (index) => {
+    setEdit((current) => ({
+      ...current,
+      images: (current.images || []).filter((_, imageIndex) => imageIndex !== index),
+    }));
+  };
+
+  const moveGalleryImage = (index, direction) => {
+    setEdit((current) => {
+      const images = [...(current.images || [])];
+      const target = direction === "up" ? index - 1 : index + 1;
+      if (target < 0 || target >= images.length) return current;
+      const [moved] = images.splice(index, 1);
+      images.splice(target, 0, moved);
+      return { ...current, images };
+    });
+  };
+
   const editorForm = edit && (
     <>
       <div className="toolbar cms-modal-head">
@@ -185,6 +238,26 @@ export default function CmsEditor({
               <input type="file" className="input" accept={allowVideoUpload ? "image/*,video/*" : "image/*"} onChange={fileChange} disabled={uploading} />
               <small>{uploading ? "Uploading media..." : "Images up to 5MB are allowed. Upload items one by one here."}</small>
               {edit.videoUrl ? <video className="thumb cms-preview-thumb" src={mediaUrl(edit.videoUrl)} controls muted /> : edit.image && <img className="thumb cms-preview-thumb" src={mediaUrl(edit.image)} alt="preview" />}
+            </label>
+          )}
+          {allowGallery && (
+            <label className="cms-field cms-content-field">Extra Images (optional slider)
+              <input type="file" className="input" accept="image/*" multiple onChange={addGalleryImages} disabled={uploading} />
+              <small>Select any number of extra images (5MB each) to show as a rotating slider on this card, in addition to the main image above.</small>
+              {(edit.images || []).length > 0 && (
+                <div className="album-photo-grid editable">
+                  {edit.images.map((image, index) => (
+                    <div className="photo-edit-card gallery-photo-item" key={`${image}-${index}`}>
+                      <img src={mediaUrl(image)} alt="" />
+                      <div className="gallery-photo-order">
+                        <button type="button" onClick={() => moveGalleryImage(index, "up")} disabled={index === 0}>↑</button>
+                        <button type="button" onClick={() => moveGalleryImage(index, "down")} disabled={index === edit.images.length - 1}>↓</button>
+                      </div>
+                      <button className="btn danger" type="button" onClick={() => removeGalleryImage(index)}>Remove</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </label>
           )}
           {allowVideo && (

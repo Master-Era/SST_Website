@@ -109,7 +109,13 @@ function Activity() {
                     <p>{activity.detail || activity.content}</p>
                     <a href="/gallery#activity-gallery">Open Gallery</a>
                   </div>
-                  <ActivitySlider activity={activity} images={[mediaUrl(activity.image)].filter(Boolean)} />
+                  <ActivitySlider
+                    activity={activity}
+                    images={[
+                      mediaUrl(activity.image),
+                      ...((activity.images || []).map((image) => mediaUrl(image))),
+                    ].filter(Boolean)}
+                  />
                 </article>
               ))}
             </div>
