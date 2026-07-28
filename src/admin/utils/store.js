@@ -1,8 +1,11 @@
-import { defaultAdmins, defaultInquiries, defaultDonations, defaultDevotees, defaultSettings } from "../data/defaultData";
+import { defaultAdmins, defaultWebsiteData, defaultInquiries, defaultDonations, defaultDevotees, defaultSettings } from "../data/defaultData";
 import logoImg from "../../assets/images/shreeji-logo.png";
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || "/api";
 
 const keys = {
   admins: "mandir_admin_users",
+  website: "mandir_website_data",
   inquiries: "mandir_inquiries",
   donations: "mandir_donations",
   devotees: "mandir_devotees",
@@ -10,21 +13,31 @@ const keys = {
   logs: "mandir_logs",
   notifications: "mandir_notifications",
 };
+const WEBSITE_SCHEMA_VERSION = 6;
 
 const clone = (v) => JSON.parse(JSON.stringify(v));
 export const load = (key, fallback) => {
   const raw = localStorage.getItem(keys[key]);
   if (!raw) { localStorage.setItem(keys[key], JSON.stringify(fallback)); return clone(fallback); }
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (key === "website" && parsed?.__schemaVersion !== WEBSITE_SCHEMA_VERSION) {
+      const normalized = normalizeWebsiteData(parsed);
+      normalized.__schemaVersion = WEBSITE_SCHEMA_VERSION;
+      localStorage.setItem(keys[key], JSON.stringify(normalized));
+      return normalized;
+    }
+    return parsed;
   } catch { return clone(fallback); }
 };
 export const save = (key, value) => {
-  localStorage.setItem(keys[key], JSON.stringify(value));
-  return value;
+  const nextValue = key === "website" ? { ...value, __schemaVersion: WEBSITE_SCHEMA_VERSION } : value;
+  localStorage.setItem(keys[key], JSON.stringify(nextValue));
+  if (key === "website") syncWebsiteToBackend(nextValue);
+  return nextValue;
 };
 export const initStore = () => {
-  load("admins", defaultAdmins); load("inquiries", defaultInquiries);
+  load("admins", defaultAdmins); load("website", defaultWebsiteData); load("inquiries", defaultInquiries);
   load("donations", defaultDonations); load("devotees", defaultDevotees); load("settings", defaultSettings);
   load("logs", []); load("notifications", []);
 };
@@ -42,6 +55,154 @@ export const addNotification = (message, type = "info") => {
   items.unshift({ id: nextId(items), message, type, read: false, time: new Date().toLocaleString() });
   save("notifications", items.slice(0, 300));
 };
+
+const adminToken = () => localStorage.getItem("mandir_admin_token") || localStorage.getItem("adminToken") || "";
+
+async function putPageContent(pageKey, contentData) {
+  const token = adminToken();
+  if (!token || token === "local-demo-token") {
+    throw new Error("Please login again. Admin token is missing.");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/admin/page-content`, {
+    method: "PUT",
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ page_key: pageKey, content_data: contentData }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.message || payload.detail || "Website data could not be saved to the server.");
+  }
+  return payload;
+}
+
+let websiteSyncQueue = Promise.resolve();
+
+export function syncWebsiteToBackend(website) {
+  websiteSyncQueue = websiteSyncQueue
+    .catch(() => undefined)
+    .then(async () => {
+      await putPageContent("Admin Website Data", website);
+      window.dispatchEvent(new CustomEvent("website-server-saved", { detail: { ok: true } }));
+      return true;
+    })
+    .catch((error) => {
+      console.error("Website server save failed:", error);
+      window.dispatchEvent(new CustomEvent("website-server-saved", {
+        detail: { ok: false, message: error.message },
+      }));
+      window.alert(`Saved only in this browser. Server save failed: ${error.message}`);
+      throw error;
+    });
+
+  return websiteSyncQueue;
+}
+
+export async function bootstrapWebsiteFromBackend() {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/content/${encodeURIComponent("Admin Website Data")}?t=${Date.now()}`,
+      { cache: "no-store" }
+    );
+    if (!response.ok) return false;
+    const payload = await response.json();
+    const data = payload?.content_data ?? payload;
+    const parsed = typeof data === "string" ? JSON.parse(data) : data;
+    if (!parsed || typeof parsed !== "object" || !Object.keys(parsed).length) return false;
+    const normalized = normalizeWebsiteData(parsed);
+    normalized.__schemaVersion = WEBSITE_SCHEMA_VERSION;
+    localStorage.setItem(keys.website, JSON.stringify(normalized));
+    return true;
+  } catch (error) {
+    console.error("Could not load website data from server:", error);
+    return false;
+  }
+}
+
+function fillItem(item = {}, fallback = {}) {
+  return {
+    ...fallback,
+    ...item,
+    title: item.title || fallback.title,
+    content: item.content || fallback.content,
+    image: item.image || fallback.image,
+  };
+}
+
+function mergeCollection(current = [], defaults = []) {
+  const source = Array.isArray(current) ? current : [];
+  const mergedDefaults = defaults.map((fallback, index) => {
+    const matched = source.find((row) =>
+      (fallback.key && row.key === fallback.key) ||
+      (fallback.title && row.title === fallback.title) ||
+      Number(row.id) === Number(fallback.id)
+    ) || source[index];
+    return fillItem(matched || {}, fallback);
+  });
+
+  const usedIds = new Set(mergedDefaults.map((item) => String(item.id)));
+  const usedKeys = new Set(mergedDefaults.map((item) => item.key).filter(Boolean));
+  const usedTitles = new Set(mergedDefaults.map((item) => item.title).filter(Boolean));
+  const extras = source.filter((item) =>
+    !usedIds.has(String(item.id)) &&
+    !(item.key && usedKeys.has(item.key)) &&
+    !(item.title && usedTitles.has(item.title))
+  );
+
+  return [...mergedDefaults, ...extras].map((item, index) => ({
+    ...item,
+    sortOrder: index + 1,
+  }));
+}
+
+function normalizeWebsiteData(value) {
+  const data = clone(value || {});
+  const defaults = clone(defaultWebsiteData);
+  data.home = data.home || defaults.home;
+  data.activity = data.activity || defaults.activity;
+  data.events = data.events || defaults.events;
+  data.news = data.news || defaults.news;
+  data.gallery = data.gallery || defaults.gallery;
+  data.about = data.about || defaults.about;
+
+  data.home.sections = mergeCollection(data.home.sections, defaults.home.sections);
+  data.home.hero = mergeCollection(data.home.hero, defaults.home.hero);
+  data.home.founder = fillItem(data.home.founder, defaults.home.founder);
+  data.activity.activities = mergeCollection(data.activity.activities, defaults.activity.activities);
+  data.activity.socialCare = mergeCollection(data.activity.socialCare, defaults.activity.socialCare);
+  data.events.items = mergeCollection(data.events.items, defaults.events.items);
+  data.about.sections = mergeCollection(data.about.sections, defaults.about.sections)
+    .filter((item) => item.title !== "Founder")
+    .map((item, index) => ({ ...item, sortOrder: index + 1 }));
+
+  data.news.latest = mergeCollection(data.news.latest, defaults.news.latest || []);
+  data.news.announcements = mergeCollection(data.news.announcements, defaults.news.announcements || []);
+  data.news.notices = mergeCollection(data.news.notices, defaults.news.notices || []);
+  data.news.customSections = mergeCollection(data.news.customSections, defaults.news.customSections || []);
+
+  data.gallery.albums = (data.gallery.albums || defaults.gallery.albums || []).map((album, index) => {
+    const fallback = defaults.gallery.albums[index] || {};
+    return {
+      ...fallback,
+      ...album,
+      sortOrder: index + 1,
+      cover: album.cover || fallback.cover || "",
+      images: album.images?.length ? album.images : (fallback.images || []),
+    };
+  });
+
+  // Shallow merge: keep every admin-edited contact field, only fill in
+  // fields that are genuinely missing (e.g. on first migration to this
+  // schema version) with the real business-info defaults.
+  data.contact = { ...defaults.contact, ...(data.contact || {}) };
+
+  return data;
+}
 
 export const MAX_ADMIN_IMAGE_SIZE = 5 * 1024 * 1024;
 

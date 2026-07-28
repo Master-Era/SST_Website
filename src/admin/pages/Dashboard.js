@@ -16,6 +16,8 @@ export default function Dashboard() {
     donations: [],
     devotees: [],
     users: [],
+    gallery: [],
+    events: [],
   });
 
   const loadDashboard = async () => {
@@ -27,6 +29,8 @@ export default function Dashboard() {
       adminApi.list("donations"),
       adminApi.list("devotees"),
       adminApi.list("users"),
+      adminApi.list("gallery"),
+      adminApi.list("events"),
     ]);
 
     const valueOrEmpty = (result) =>
@@ -39,6 +43,8 @@ export default function Dashboard() {
       donations: valueOrEmpty(requests[1]),
       devotees: valueOrEmpty(requests[2]),
       users: valueOrEmpty(requests[3]),
+      gallery: valueOrEmpty(requests[4]),
+      events: valueOrEmpty(requests[5]),
     });
 
     if (requests.some((result) => result.status === "rejected")) {
@@ -60,11 +66,24 @@ export default function Dashboard() {
       (row) => normalizeStatus(row.status) === "Not Connected"
     ).length;
 
+    const galleryImages = data.gallery.reduce((total, item) => {
+      if (Array.isArray(item.images)) return total + item.images.length;
+      if (item.image_url || item.image) return total + 1;
+      return total;
+    }, 0);
+
+    const upcomingEvents = data.events.filter((item) => {
+      const status = String(item.status || "active").toLowerCase();
+      return status === "upcoming" || status === "active";
+    }).length;
+
     return {
       inquiries: data.inquiries.length,
       donations: data.donations.length,
       devotees: data.devotees.length,
       users: data.users.length,
+      gallery: galleryImages,
+      events: upcomingEvents,
       connected,
       notConnected,
     };
@@ -75,6 +94,8 @@ export default function Dashboard() {
     ["Donation Applications", counts.donations, "/admin/donations"],
     ["Devotee Records", counts.devotees, "/admin/devotees"],
     ["Admin Users", counts.users, "/admin/users"],
+    ["Gallery Images", counts.gallery, "/admin/website/gallery"],
+    ["Upcoming Events", counts.events, "/admin/website/events"],
   ];
 
   const maxStat = Math.max(
