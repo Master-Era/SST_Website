@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -8,41 +9,31 @@ import React, {
 import "./HeroSection.css";
 
 /*
-  Temporary demo data.
+  Local fallback slide.
 
-  Admin/API માંથી data આવતો હોય તો આ array remove કરીને
-  props અથવા API data use કરી શકો છો.
+  API content load થાય ત્યાં સુધી આ image તરત દેખાશે.
+  આ image projectમાં હોવી જરૂરી છે:
 
-  type:
-  - "image"
-  - "video"
+  public/images/hero/mandir-1.jpg
 */
 
-const defaultSlides = [
+const fallbackSlides = [
   {
-    id: 1,
+    id: "fallback-hero-1",
     type: "image",
     mediaUrl: "/images/hero/mandir-1.jpg",
     altText: "Shreeji Samipya Trust Mandir",
-  },
-  {
-    id: 2,
-    type: "video",
-    mediaUrl: "/videos/mandir-video.mp4",
-    posterUrl: "/images/hero/video-poster.jpg",
-    altText: "Mandir Video",
-  },
-  {
-    id: 3,
-    type: "image",
-    mediaUrl: "/images/hero/mandir-2.jpg",
-    altText: "Temple View",
+    active: true,
   },
 ];
 
 const getMediaType = (slide) => {
   if (slide?.type) {
-    return slide.type.toLowerCase();
+    return String(slide.type).toLowerCase();
+  }
+
+  if (slide?.mediaType) {
+    return String(slide.mediaType).toLowerCase();
   }
 
   const mediaUrl =
@@ -52,12 +43,13 @@ const getMediaType = (slide) => {
     slide?.video_url ||
     slide?.image ||
     slide?.image_url ||
+    slide?.src ||
     "";
 
   const videoExtensions = [".mp4", ".webm", ".ogg", ".mov"];
 
   const isVideo = videoExtensions.some((extension) =>
-    mediaUrl.toLowerCase().includes(extension)
+    String(mediaUrl).toLowerCase().includes(extension)
   );
 
   return isVideo ? "video" : "image";
@@ -71,6 +63,7 @@ const getMediaUrl = (slide) => {
     slide?.video_url ||
     slide?.image ||
     slide?.image_url ||
+    slide?.src ||
     ""
   );
 };
@@ -85,34 +78,56 @@ const getPosterUrl = (slide) => {
   );
 };
 
+const isSlideActive = (slide) => {
+  if (
+    slide?.is_active === undefined &&
+    slide?.isActive === undefined &&
+    slide?.active === undefined
+  ) {
+    return true;
+  }
+
+  return Boolean(
+    slide?.is_active ??
+      slide?.isActive ??
+      slide?.active
+  );
+};
+
 const HeroSection = ({
-  slides = defaultSlides,
+  slides = [],
   imageDuration = 6000,
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
+  const [isManuallyPaused, setIsManuallyPaused] =
+    useState(false);
 
   const videoRefs = useRef([]);
   const imageTimerRef = useRef(null);
 
-  const activeSlides = Array.isArray(slides)
-    ? slides.filter((slide) => {
-        const mediaUrl = getMediaUrl(slide);
+  /*
+    API slides available હોય તો તે use થશે.
+    API load પહેલાં અથવા empty data હોય તો fallback image દેખાશે.
+  */
 
-        const isActive =
-          slide?.is_active === undefined &&
-          slide?.isActive === undefined &&
-          slide?.active === undefined
-            ? true
-            : Boolean(
-                slide?.is_active ??
-                  slide?.isActive ??
-                  slide?.active
-              );
+  const activeSlides = useMemo(() => {
+    const sourceSlides =
+      Array.isArray(slides) && slides.length > 0
+        ? slides
+        : fallbackSlides;
 
-        return mediaUrl && isActive;
-      })
-    : [];
+    const validSlides = sourceSlides.filter((slide) => {
+      const mediaUrl = getMediaUrl(slide);
+
+      return Boolean(mediaUrl) && isSlideActive(slide);
+    });
+
+    if (validSlides.length > 0) {
+      return validSlides;
+    }
+
+    return fallbackSlides;
+  }, [slides]);
 
   const totalSlides = activeSlides.length;
 
@@ -140,20 +155,25 @@ const HeroSection = ({
   }, [currentSlide, goToSlide]);
 
   /*
+    API data બદલાય ત્યારે current slide valid rangeમાં રાખે છે.
+  */
+
+  useEffect(() => {
+    if (currentSlide >= totalSlides) {
+      setCurrentSlide(0);
+    }
+  }, [currentSlide, totalSlides]);
+
+  /*
     Current slide change થાય ત્યારે:
 
-    - બધા inactive videos pause થશે
-    - active video beginning થી play થશે
+    - inactive videos pause થશે
+    - active video play થશે
     - active image માટે timer start થશે
   */
 
   useEffect(() => {
     if (totalSlides === 0) {
-      return undefined;
-    }
-
-    if (currentSlide >= totalSlides) {
-      setCurrentSlide(0);
       return undefined;
     }
 
@@ -166,7 +186,15 @@ const HeroSection = ({
 
       if (index !== currentSlide) {
         video.pause();
-        video.currentTime = 0;
+
+        try {
+          video.currentTime = 0;
+        } catch (error) {
+          console.warn(
+            "Video reset could not be completed:",
+            error
+          );
+        }
       }
     });
 
@@ -178,7 +206,14 @@ const HeroSection = ({
         videoRefs.current[currentSlide];
 
       if (currentVideo) {
-        currentVideo.currentTime = 0;
+        try {
+          currentVideo.currentTime = 0;
+        } catch (error) {
+          console.warn(
+            "Video start position could not be reset:",
+            error
+          );
+        }
 
         if (!isManuallyPaused) {
           const playPromise = currentVideo.play();
@@ -215,9 +250,8 @@ const HeroSection = ({
   ]);
 
   /*
-    Browser tab hidden થાય ત્યારે video pause થશે.
-
-    User પાછો tab પર આવે ત્યારે active video ફરી play થશે.
+    Browser tab hidden થાય ત્યારે active video pause થશે.
+    Tab visible થાય ત્યારે active video ફરી play થશે.
   */
 
   useEffect(() => {
@@ -230,10 +264,11 @@ const HeroSection = ({
         return;
       }
 
+      const currentItem = activeSlides[currentSlide];
+
       if (
         activeVideo &&
-        getMediaType(activeSlides[currentSlide]) ===
-          "video" &&
+        getMediaType(currentItem) === "video" &&
         !isManuallyPaused
       ) {
         activeVideo.play().catch(() => {});
@@ -264,6 +299,23 @@ const HeroSection = ({
   const handleVideoError = () => {
     console.error("Hero video could not be loaded.");
     goToNextSlide();
+  };
+
+  const handleImageError = (event) => {
+    const imageElement = event.currentTarget;
+
+    imageElement.onerror = null;
+
+    if (
+      imageElement.src.includes(
+        "/images/hero/mandir-1.jpg"
+      )
+    ) {
+      return;
+    }
+
+    imageElement.src =
+      "/images/hero/mandir-1.jpg";
   };
 
   const togglePlayPause = () => {
@@ -302,10 +354,6 @@ const HeroSection = ({
     });
   };
 
-  if (!activeSlides.length) {
-    return null;
-}
-
   const currentMediaType = getMediaType(
     activeSlides[currentSlide]
   );
@@ -318,14 +366,19 @@ const HeroSection = ({
       <div className="hero-bg">
         {activeSlides.map((slide, index) => {
           const mediaType = getMediaType(slide);
-          const mediaUrl = getMediaUrl(slide);
-          const posterUrl = getPosterUrl(slide);
+          const mediaUrl =
+            getMediaUrl(slide) ||
+            "/images/hero/mandir-1.jpg";
 
+          const posterUrl = getPosterUrl(slide);
           const isActive = index === currentSlide;
 
           return (
             <div
-              key={slide.id || `${mediaUrl}-${index}`}
+              key={
+                slide.id ||
+                `${mediaUrl}-${index}`
+              }
               className={`hero-slide ${
                 isActive ? "active" : ""
               }`}
@@ -338,16 +391,22 @@ const HeroSection = ({
                   }}
                   className="hero-media hero-video"
                   src={mediaUrl}
-                  poster={posterUrl || undefined}
+                  poster={
+                    posterUrl ||
+                    "/images/hero/mandir-1.jpg"
+                  }
                   muted
                   playsInline
-                  preload={isActive ? "auto" : "metadata"}
+                  preload={
+                    isActive ? "auto" : "metadata"
+                  }
                   onEnded={handleVideoEnded}
                   onError={handleVideoError}
                   onClick={togglePlayPause}
                   aria-label={
                     slide.altText ||
                     slide.alt_text ||
+                    slide.title ||
                     "Hero video"
                   }
                 />
@@ -358,13 +417,18 @@ const HeroSection = ({
                   alt={
                     slide.altText ||
                     slide.alt_text ||
-                    "Hero image"
+                    slide.title ||
+                    "Shreeji Samipya Trust Mandir"
                   }
-                  loading={index === 0 ? "eager" : "lazy"}
+                  loading={
+                    index === 0 ? "eager" : "lazy"
+                  }
                   fetchPriority={
                     index === 0 ? "high" : "auto"
                   }
+                  decoding="async"
                   draggable="false"
+                  onError={handleImageError}
                 />
               )}
 

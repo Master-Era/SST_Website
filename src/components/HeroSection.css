@@ -1,7 +1,3 @@
-/* =========================================================
-   HERO SECTION
-   ========================================================= */
-
 .hero-section {
   position: relative;
   display: grid;
@@ -9,19 +5,9 @@
   width: 100%;
   padding: clamp(16px, 2.2vw, 34px);
   overflow: hidden;
-
   background:
-    radial-gradient(
-      circle at top right,
-      rgba(255, 126, 34, 0.13),
-      transparent 32%
-    ),
-    linear-gradient(
-      135deg,
-      #fffaf2 0%,
-      #ffe9d1 52%,
-      #fff8ef 100%
-    );
+    radial-gradient(circle at top right, rgba(255, 126, 34, 0.13), transparent 32%),
+    linear-gradient(135deg, #fffaf2 0%, #ffe9d1 52%, #fff8ef 100%);
 }
 
 .hero-section::before {
@@ -37,10 +23,6 @@
   pointer-events: none;
 }
 
-/* =========================================================
-   HERO CONTAINER
-   ========================================================= */
-
 .hero-bg {
   position: relative;
   width: min(100%, 1500px);
@@ -48,61 +30,38 @@
   min-height: 320px;
   margin: 0 auto;
   overflow: hidden;
-
   border-radius: 24px;
-  background:
-    linear-gradient(
-      110deg,
-      #1d0b0b 8%,
-      #351515 18%,
-      #1d0b0b 33%
-    );
-
-  background-size: 200% 100%;
-  animation: heroSkeleton 1.5s linear infinite;
-
+  background: #1d0b0b;
   box-shadow:
     0 30px 80px rgba(82, 24, 24, 0.24),
     0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
-/* Skeleton animation while API/image is loading */
-
-@keyframes heroSkeleton {
-  0% {
-    background-position: 200% 0;
-  }
-
-  100% {
-    background-position: -200% 0;
-  }
+/* Clean fallback only if every configured media file fails. */
+.hero-placeholder {
+  background:
+    radial-gradient(circle at center, rgba(255, 126, 34, 0.14), transparent 34%),
+    linear-gradient(135deg, #1d0b0b, #351515, #1d0b0b);
+  background-size: 200% 100%;
+  animation: heroPlaceholderMove 1.6s linear infinite;
 }
 
-/* Stop skeleton when any slide is available */
-
-.hero-bg:has(.hero-slide) {
-  animation: none;
-  background: #1d0b0b;
+@keyframes heroPlaceholderMove {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }
-
-/* =========================================================
-   HERO SLIDES
-   ========================================================= */
 
 .hero-slide {
   position: absolute;
   inset: 0;
   z-index: 0;
-
   opacity: 0;
   visibility: hidden;
   transform: scale(1.035);
-
   transition:
     opacity 0.8s ease,
     visibility 0.8s ease,
     transform 7s ease;
-
   pointer-events: none;
 }
 
@@ -114,34 +73,14 @@
   pointer-events: auto;
 }
 
-/* =========================================================
-   HERO MEDIA
-   ========================================================= */
-
 .hero-media {
   display: block;
   width: 100%;
   height: 100%;
   min-height: 100%;
-
-  opacity: 0;
   object-position: center;
   user-select: none;
   -webkit-user-drag: none;
-
-  animation: heroMediaFade 0.7s ease forwards;
-}
-
-@keyframes heroMediaFade {
-  from {
-    opacity: 0;
-    transform: scale(1.015);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 
 .hero-image {
@@ -155,126 +94,37 @@
   cursor: pointer;
 }
 
-/* =========================================================
-   MEDIA SHADE
-   ========================================================= */
-
 .hero-media-shade {
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
-
   background:
-    linear-gradient(
-      90deg,
-      rgba(35, 7, 7, 0.25) 0%,
-      rgba(35, 7, 7, 0.06) 46%,
-      rgba(16, 4, 4, 0.12) 100%
-    ),
-    linear-gradient(
-      0deg,
-      rgba(22, 5, 5, 0.46) 0%,
-      transparent 32%
-    );
+    linear-gradient(90deg, rgba(35, 7, 7, 0.18) 0%, rgba(35, 7, 7, 0.03) 46%, rgba(16, 4, 4, 0.08) 100%),
+    linear-gradient(0deg, rgba(22, 5, 5, 0.34) 0%, transparent 30%);
 }
-
-/* =========================================================
-   EMPTY / LOADING STATE
-   Removes "No hero media available" text
-   ========================================================= */
-
-.hero-empty {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  overflow: hidden;
-  color: transparent;
-  background:
-    linear-gradient(
-      110deg,
-      #1d0b0b 8%,
-      #351515 18%,
-      #1d0b0b 33%
-    );
-
-  background-size: 200% 100%;
-  animation: heroSkeleton 1.5s linear infinite;
-}
-
-/* Hide the text completely */
-
-.hero-empty p,
-.hero-empty span,
-.hero-empty h1,
-.hero-empty h2,
-.hero-empty h3 {
-  display: none !important;
-}
-
-/* Optional subtle loader */
-
-.hero-empty::after {
-  content: "";
-  width: 44px;
-  height: 44px;
-
-  border: 4px solid rgba(255, 255, 255, 0.16);
-  border-top-color: rgba(255, 126, 34, 0.95);
-  border-radius: 50%;
-
-  animation: heroLoaderSpin 0.8s linear infinite;
-}
-
-@keyframes heroLoaderSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* =========================================================
-   HERO ARROWS
-   ========================================================= */
 
 .hero-arrow {
   position: absolute;
   z-index: 6;
   top: 50%;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   width: 50px;
   height: 50px;
   padding: 0;
-
   transform: translateY(-50%);
-
   border: 1px solid rgba(255, 255, 255, 0.52);
   border-radius: 50%;
-
   background: rgba(31, 8, 8, 0.32);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.14);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-
-  color: #ffffff;
-  font-family: Arial, sans-serif;
-  font-size: 1.65rem;
-  line-height: 1;
-
+  color: #fff;
+  font: 400 1.65rem/1 Arial, sans-serif;
   cursor: pointer;
-
-  transition:
-    background 0.25s ease,
-    border-color 0.25s ease,
-    transform 0.25s ease;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
 }
 
 .hero-arrow:hover {
@@ -287,98 +137,20 @@
   transform: translateY(-50%) scale(0.96);
 }
 
-.hero-prev {
-  left: 18px;
-}
-
-.hero-next {
-  right: 18px;
-}
-
-/* =========================================================
-   PLAY / PAUSE CONTROL
-   ========================================================= */
-
-.hero-play-control {
-  position: absolute;
-  z-index: 7;
-  right: 28px;
-  bottom: 76px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 44px;
-  height: 44px;
-  padding: 0;
-
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 50%;
-
-  background: rgba(29, 7, 7, 0.38);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-
-  color: #ffffff;
-  cursor: pointer;
-
-  transition:
-    transform 0.25s ease,
-    background 0.25s ease;
-}
-
-.hero-play-control:hover {
-  transform: scale(1.08);
-  background: var(--color-primary, #ff6b00);
-}
-
-.hero-play-control:active {
-  transform: scale(0.96);
-}
-
-.hero-play-icon {
-  display: block;
-  margin-left: 3px;
-  font-size: 1.15rem;
-  line-height: 1;
-}
-
-.hero-pause-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.hero-pause-icon span {
-  display: block;
-  width: 4px;
-  height: 16px;
-  border-radius: 4px;
-  background: #ffffff;
-}
-
-/* =========================================================
-   VIDEO LABEL
-   ========================================================= */
+.hero-prev { left: 18px; }
+.hero-next { right: 18px; }
 
 .hero-video-label {
   position: absolute;
   z-index: 6;
   top: 24px;
   right: 24px;
-
   padding: 8px 14px;
-
   border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 999px;
-
   background: rgba(24, 6, 6, 0.32);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-
   color: rgba(255, 255, 255, 0.9);
   font-size: 0.72rem;
   font-weight: 800;
@@ -386,136 +158,28 @@
   text-transform: uppercase;
 }
 
-/* =========================================================
-   HERO FOOTER
-   ========================================================= */
-
-.hero-footer {
-  position: absolute;
-  z-index: 6;
-  right: clamp(28px, 6vw, 96px);
-  bottom: 27px;
-  left: clamp(28px, 6vw, 96px);
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-/* =========================================================
-   DOTS
-   ========================================================= */
-
-.hero-dots {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.hero-dots button {
-  width: 34px;
-  height: 4px;
-  padding: 0;
-
-  border: 0;
-  border-radius: 99px;
-
-  background: rgba(255, 255, 255, 0.42);
-  cursor: pointer;
-
-  transition:
-    width 0.25s ease,
-    background 0.25s ease,
-    transform 0.25s ease;
-}
-
-.hero-dots button:hover {
-  transform: scaleY(1.5);
-  background: rgba(255, 255, 255, 0.8);
-}
-
-.hero-dots button.active {
-  width: 62px;
-  background: var(--color-primary, #ff6b00);
-}
-
-/* =========================================================
-   COUNTER
-   ========================================================= */
-
-.hero-counter {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 0.8rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-}
-
-.hero-counter span {
-  color: rgba(255, 255, 255, 0.52);
-}
-
-/* =========================================================
-   FOCUS ACCESSIBILITY
-   ========================================================= */
-
-.hero-arrow:focus-visible,
-.hero-play-control:focus-visible,
-.hero-dots button:focus-visible {
+.hero-arrow:focus-visible {
   outline: 3px solid rgba(255, 153, 82, 0.95);
   outline-offset: 4px;
 }
 
-/* =========================================================
-   TABLET
-   ========================================================= */
-
 @media (max-width: 900px) {
-  .hero-section {
-    padding: 14px;
-  }
-
+  .hero-section { padding: 14px; }
   .hero-bg {
     aspect-ratio: 16 / 9;
     min-height: 260px;
     border-radius: 18px;
   }
-
   .hero-arrow {
     width: 44px;
     height: 44px;
   }
-
-  .hero-prev {
-    left: 14px;
-  }
-
-  .hero-next {
-    right: 14px;
-  }
-
-  .hero-footer {
-    right: 34px;
-    left: 34px;
-  }
-
-  .hero-play-control {
-    right: 24px;
-    bottom: 72px;
-  }
+  .hero-prev { left: 14px; }
+  .hero-next { right: 14px; }
 }
 
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
 @media (max-width: 560px) {
-  .hero-section {
-    padding: 8px;
-  }
+  .hero-section { padding: 8px; }
 
   .hero-bg {
     width: 100%;
@@ -526,128 +190,37 @@
 
   .hero-arrow {
     top: auto;
-    bottom: 74px;
-
+    bottom: 18px;
     width: 40px;
     height: 40px;
-
     transform: none;
     font-size: 1.3rem;
   }
 
-  .hero-arrow:hover {
-    transform: scale(1.06);
-  }
-
-  .hero-arrow:active {
-    transform: scale(0.96);
-  }
-
-  .hero-prev {
-    left: 18px;
-  }
-
-  .hero-next {
-    right: 18px;
-  }
-
-  .hero-footer {
-    right: 20px;
-    bottom: 25px;
-    left: 20px;
-  }
-
-  .hero-dots {
-    max-width: 70%;
-    gap: 6px;
-  }
-
-  .hero-dots button {
-    width: 20px;
-  }
-
-  .hero-dots button.active {
-    width: 42px;
-  }
-
-  .hero-play-control {
-    top: 18px;
-    right: 18px;
-    bottom: auto;
-
-    width: 40px;
-    height: 40px;
-  }
+  .hero-arrow:hover { transform: scale(1.06); }
+  .hero-arrow:active { transform: scale(0.96); }
+  .hero-prev { left: 18px; }
+  .hero-next { right: 18px; }
 
   .hero-video-label {
-    top: 20px;
-    right: 68px;
-
+    top: 18px;
+    right: 18px;
     padding: 7px 11px;
     font-size: 0.64rem;
   }
-
-  .hero-counter {
-    font-size: 0.72rem;
-  }
-
-  .hero-empty::after {
-    width: 36px;
-    height: 36px;
-    border-width: 3px;
-  }
 }
-
-/* =========================================================
-   SMALL MOBILE
-   ========================================================= */
 
 @media (max-width: 380px) {
-  .hero-bg {
-    min-height: 210px;
-  }
-
-  .hero-footer {
-    right: 16px;
-    left: 16px;
-  }
-
-  .hero-arrow {
-    bottom: 68px;
-  }
-
-  .hero-dots button {
-    width: 16px;
-  }
-
-  .hero-dots button.active {
-    width: 32px;
-  }
+  .hero-bg { min-height: 210px; }
 }
 
-/* =========================================================
-   REDUCED MOTION
-   ========================================================= */
-
 @media (prefers-reduced-motion: reduce) {
-  .hero-bg,
-  .hero-empty,
-  .hero-empty::after,
-  .hero-media,
+  .hero-placeholder,
   .hero-slide,
-  .hero-arrow,
-  .hero-play-control,
-  .hero-dots button {
+  .hero-arrow {
     animation: none;
     transition: none;
   }
 
-  .hero-slide {
-    transform: none;
-  }
-
-  .hero-media {
-    opacity: 1;
-    transform: none;
-  }
+  .hero-slide { transform: none; }
 }
